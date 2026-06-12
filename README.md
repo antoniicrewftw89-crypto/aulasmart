@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🧠 AulaSmart — tus árboles de ideas
 
-## Getting Started
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![React Flow](https://img.shields.io/badge/React_Flow-12-ff0072)
+![Local First](https://img.shields.io/badge/Filosofía-Local--first-22C55E)
 
-First, run the development server:
+**Mindmap-first.** Tú construyes tu árbol de ideas de estudio; la IA es la
+empleada — verifica, investiga y genera material **desde tu árbol** (fases
+F1+). Inspirado en el sistema de Nate Gentile: *el humano diseña, la IA
+ejecuta*. Nunca al revés.
+
+> Este proyecto refunda al antiguo `aulasmart-ai`, que invirtió esa relación
+> (la IA dibujaba el mapa y el humano miraba). Spec completo en
+> [`docs/superpowers/specs/`](docs/superpowers/specs/2026-06-12-aulasmart-refundacion-design.md).
+
+## Arrancar
+
+- **Doble click a `iniciar.bat`**, o `pnpm dev` — abre en <http://localhost:3002>.
+- Funciona **al 100% sin API keys ni internet**: la IA es capa opcional (F1+),
+  no cimiento.
+
+## El editor (F0 — listo)
+
+| Acción | Cómo |
+|---|---|
+| Crear hijo | `Tab` (del nodo seleccionado) o doble click en el lienzo |
+| Crear hermano | `Enter` |
+| Editar texto | doble click sobre el nodo o `F2` |
+| Borrar nodo (y sus hijos) | `Supr` o el botón del panel |
+| Mover | arrastrar (la posición queda guardada; ⇄ Reordenar vuelve al auto-layout) |
+| Relación cruzada | arrastrar del borde de un nodo a otro; doble click sobre la flecha la quita |
+| Notas, fuentes, estado, color, etiquetas | panel lateral del nodo seleccionado |
+| Buscar | caja de búsqueda (Enter salta al primer resultado) |
+
+Estados por nodo: **borrador** · **✅ verificado** · **⚠️ dudoso** — los decides tú.
+
+## Dónde viven tus datos
+
+- `data/arboles/{materia}/{tema}.json` — un archivo por árbol, legible y tuyo.
+- `data/` es un **repo git propio**: cada guardado es un commit (historial de
+  versiones gratis). Borrar = mover a `data/.papelera/` (recuperable).
+- Escrituras atómicas: un crash jamás corrompe un árbol.
+
+## Espejo en Obsidian
+
+Cada guardado escribe el outline del árbol en tu bóveda:
+`synapse-vault/05_Estudio/{materia}/{tema}.md` (frontmatter con
+`origen: aulasmart`; **no editar a mano** — la fuente de verdad es el JSON).
+Otra bóveda: variable de entorno `OBSIDIAN_VAULT_PATH`.
+
+## API (puertas traseras para Janus)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+curl localhost:3002/api/arboles                              # lista
+curl -X POST localhost:3002/api/arboles -H 'Content-Type: application/json' \
+     -d '{"materia":"Cálculo","tema":"Límites"}'             # crear
+curl localhost:3002/api/arboles/calculo/limites              # leer
+curl -X PUT ... (árbol completo)                             # guardar
+curl -X DELETE localhost:3002/api/arboles/calculo/limites    # a la papelera
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Regla de la casa: **todo lo que hace la UI pasa por estas rutas** — cualquier
+agente (tu Janus) puede operar AulaSmart sin tocar la pantalla.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Desarrollo
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm test        # vitest: modelo, storage, espejo, proyección a React Flow
+pnpm tsc --noEmit && pnpm lint
+pnpm build
+```
 
-## Learn More
+## Roadmap
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **F0 — Editor de árbol** ✅ (este release)
+- **F1** — IA por nodo: *Verificar* e *Investigar* (router multimodelo gratis-first; Claude solo si lo eliges)
+- **F2** — Guion de estudio generado desde el árbol
+- **F3** — Quiz/flashcards (repaso Leitner) desde el árbol
+- **F4** — Slides desde el árbol
+- **F5** — Ingesta: PDF → borrador de árbol que apruebas nodo a nodo
