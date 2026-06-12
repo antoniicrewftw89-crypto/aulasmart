@@ -71,10 +71,22 @@ pnpm tsc --noEmit && pnpm lint
 pnpm build
 ```
 
+## IA por nodo (F1 — lista)
+
+Selecciona un nodo → panel lateral → **🔍 Verificar** (¿es correcto lo que
+escribiste?) o **🔬 Investigar** (profundiza el punto). La respuesta llega a
+las **notas** del nodo con sus **fuentes**, y el estado pasa a ✅/⚠️ según el
+veredicto. Selector **Auto (gratis)** — rota Groq → Gemini — o **Claude
+(pago)**, que *solo* responde si tú lo eliges; jamás por fallback.
+
+Claves: copia `.env.example` a `.env.local` y rellena las que tengas
+(`GROQ_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `ANTHROPIC_API_KEY`).
+Sin claves, los botones explican qué falta y el resto de la app no se entera.
+
 ## Roadmap
 
-- **F0 — Editor de árbol** ✅ (este release)
-- **F1** — IA por nodo: *Verificar* e *Investigar* (router multimodelo gratis-first; Claude solo si lo eliges)
+- **F0 — Editor de árbol** ✅
+- **F1 — IA por nodo: Verificar / Investigar** ✅
 - **F2** — Guion de estudio generado desde el árbol
 - **F3** — Quiz/flashcards (repaso Leitner) desde el árbol
 - **F4** — Slides desde el árbol

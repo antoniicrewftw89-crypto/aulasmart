@@ -17,10 +17,23 @@ export function PanelNodo(props: {
   onCambios: (c: CambiosNodo) => void;
   onEliminar: () => void;
   onCerrar: () => void;
+  onAccionIA: (accion: "verificar" | "investigar", proveedor: string) => Promise<string | null>;
 }) {
   const { nodo } = props;
   const [fuenteNueva, setFuenteNueva] = useState("");
+  const [proveedor, setProveedor] = useState("auto");
+  const [cargandoIA, setCargandoIA] = useState<"verificar" | "investigar" | null>(null);
+  const [msgIA, setMsgIA] = useState<{ texto: string; error: boolean } | null>(null);
   const esRaiz = nodo.padreId === null;
+
+  async function lanzarIA(accion: "verificar" | "investigar") {
+    setCargandoIA(accion); setMsgIA(null);
+    const error = await props.onAccionIA(accion, proveedor);
+    setCargandoIA(null);
+    setMsgIA(error
+      ? { texto: error, error: true }
+      : { texto: "✓ Respuesta añadida a las notas del nodo", error: false });
+  }
 
   return (
     <aside className="absolute right-3 top-3 z-10 flex w-72 flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900/95 p-4 text-sm shadow-xl backdrop-blur">
@@ -82,6 +95,30 @@ export function PanelNodo(props: {
             style={{ backgroundColor: c }}
             className={`h-5 w-5 rounded-full ${nodo.color === c ? "ring-2 ring-white" : "opacity-70 hover:opacity-100"}`} />
         ))}
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-lg border border-neutral-800 bg-neutral-950/60 p-2">
+        <div className="flex items-center justify-between text-xs text-neutral-400">
+          <span>IA — tu empleada (actúa solo si la llamas)</span>
+          <select value={proveedor} onChange={e => setProveedor(e.target.value)}
+            className="rounded border border-neutral-700 bg-neutral-950 px-1 py-0.5 text-xs text-neutral-300">
+            <option value="auto">Auto (gratis)</option>
+            <option value="claude">Claude (pago)</option>
+          </select>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => lanzarIA("verificar")} disabled={cargandoIA !== null}
+            className="flex-1 rounded-md border border-sky-800 px-2 py-1.5 text-xs text-sky-300 enabled:hover:bg-sky-950 disabled:opacity-40">
+            {cargandoIA === "verificar" ? "Verificando…" : "🔍 Verificar"}
+          </button>
+          <button onClick={() => lanzarIA("investigar")} disabled={cargandoIA !== null}
+            className="flex-1 rounded-md border border-violet-800 px-2 py-1.5 text-xs text-violet-300 enabled:hover:bg-violet-950 disabled:opacity-40">
+            {cargandoIA === "investigar" ? "Investigando…" : "🔬 Investigar"}
+          </button>
+        </div>
+        {msgIA && (
+          <p className={`text-xs ${msgIA.error ? "text-red-400" : "text-emerald-400"}`}>{msgIA.texto}</p>
+        )}
       </div>
 
       {!esRaiz && (

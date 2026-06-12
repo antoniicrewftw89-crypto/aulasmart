@@ -107,6 +107,20 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
 
   const nodoSel = seleccion ? ed.arbol.nodos.find(n => n.id === seleccion) ?? null : null;
 
+  // La IA solo actúa cuando el humano pulsa el botón. Devuelve mensaje de error o null.
+  const accionIA = async (nodoId: string, accion: "verificar" | "investigar", proveedor: string): Promise<string | null> => {
+    try {
+      const res = await fetch(`/api/arboles/${materia}/${tema}/nodos/${nodoId}/${accion}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ proveedor }),
+      });
+      const data = await res.json();
+      if (!res.ok) return data.error ?? "la IA no pudo responder";
+      ed.reemplazarArbol(data.arbol);
+      return null;
+    } catch { return "sin conexión con el servidor"; }
+  };
+
   return (
     <div tabIndex={0} onKeyDown={onKeyDown} className="flex h-dvh flex-col outline-none">
       <BarraSuperior
@@ -134,6 +148,7 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
             onCambios={c => ed.editarNodo(nodoSel.id, c)}
             onEliminar={() => { ed.eliminarNodo(nodoSel.id); setSeleccion(null); }}
             onCerrar={() => setSeleccion(null)}
+            onAccionIA={(accion, proveedor) => accionIA(nodoSel.id, accion, proveedor)}
           />
         )}
       </div>

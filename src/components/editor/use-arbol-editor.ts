@@ -68,6 +68,8 @@ export function useArbolEditor(materia: string, tema: string) {
   return {
     arbol, noEncontrado, guardado,
     agregarHijo, agregarHermano,
+    // Para acciones del servidor (IA): el endpoint ya guardó; aquí solo se refresca el estado.
+    reemplazarArbol: (a: Arbol) => setArbol(a),
     editarNodo: (id: string, c: modelo.CambiosNodo) => mutar(a => modelo.editarNodo(a, id, c)),
     eliminarNodo: (id: string) => mutar(a => modelo.eliminarNodo(a, id)),
     conectar: (de: string, hasta: string) => mutar(a => modelo.conectar(a, de, hasta)),
