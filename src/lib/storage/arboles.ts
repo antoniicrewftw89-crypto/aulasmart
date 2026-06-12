@@ -63,6 +63,19 @@ export function listarArboles(): ResumenArbol[] {
   return resumen.sort((x, y) => y.actualizadoEn.localeCompare(x.actualizadoEn));
 }
 
+/** Guarda un artefacto generado (guion/quiz/slides) junto a su árbol. */
+export function guardarArtefacto(materia: string, tema: string, sufijo: string, contenido: string): string {
+  asegurarRepo();
+  const destino = path.join(dirArboles(), materia, `${tema}.${sufijo}`);
+  fs.mkdirSync(path.dirname(destino), { recursive: true });
+  const tmp = `${destino}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, contenido, "utf8");
+  fs.renameSync(tmp, destino);
+  git(["add", "-A"]);
+  git(["commit", "-m", `artefacto: ${materia}/${tema}.${sufijo}`, "--quiet"]);
+  return destino;
+}
+
 export function eliminarArbol(materia: string, tema: string): boolean {
   const ruta = rutaArbol(materia, tema);
   if (!fs.existsSync(ruta)) return false;

@@ -18,6 +18,19 @@ export function espejarArbol(a: Arbol, boveda: string = RUTA_BOVEDA()): boolean 
   } catch { return false; }
 }
 
+/** Espeja un artefacto generado (p. ej. {tema}.guion.md) en la bóveda. */
+export function espejarArtefacto(
+  materia: string, nombreArchivo: string, contenido: string, boveda: string = RUTA_BOVEDA(),
+): boolean {
+  try {
+    if (!fs.existsSync(boveda)) return false;
+    const dir = path.join(boveda, CARPETA_ESTUDIO, materia);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, nombreArchivo), contenido, "utf8");
+    return true;
+  } catch { return false; }
+}
+
 export function borrarEspejo(materia: string, tema: string, boveda: string = RUTA_BOVEDA()): boolean {
   try {
     const ruta = path.join(boveda, CARPETA_ESTUDIO, materia, `${tema}.md`);

@@ -126,6 +126,13 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
       <BarraSuperior
         arbol={ed.arbol} guardado={ed.guardado} busqueda={busqueda}
         onBusqueda={setBusqueda} onBuscar={irAlPrimero} onReordenar={ed.reordenar}
+        onGenerarGuion={async () => {
+          try {
+            const res = await fetch(`/api/arboles/${materia}/${tema}/generar/guion`, { method: "POST" });
+            const data = await res.json();
+            return res.ok ? null : (data.error ?? "no se pudo generar");
+          } catch { return "sin conexión con el servidor"; }
+        }}
       />
       <div className="relative flex-1">
         <ReactFlow

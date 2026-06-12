@@ -87,7 +87,9 @@ Sin claves, los botones explican qué falta y el resto de la app no se entera.
 
 - **F0 — Editor de árbol** ✅
 - **F1 — IA por nodo: Verificar / Investigar** ✅
-- **F2** — Guion de estudio generado desde el árbol
+- **F2 — Guion de estudio desde el árbol** ✅ — botón **📜 Guion**: recorre tu
+  árbol y escribe `{tema}.guion.md` (secciones por rama, checklist de los ⚠️
+  dudosos y fuentes) junto al árbol y en la bóveda
 - **F3** — Quiz/flashcards (repaso Leitner) desde el árbol
 - **F4** — Slides desde el árbol
 - **F5** — Ingesta: PDF → borrador de árbol que apruebas nodo a nodo
