@@ -1,8 +1,19 @@
 "use client";
-// Lista de árboles agrupada por materia. TODO pasa por la API (regla del spec).
+// Lista de árboles agrupada por materia: cada árbol es un sticky sobre la
+// mesa. TODO pasa por la API (regla del spec).
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ResumenArbol } from "@/lib/arbol/types";
+
+// El color del sticky depende de la materia: la misma materia, el mismo color.
+const COLORES = ["#ffe48a", "#ffb9c5", "#b9e6c4", "#b5dcf5", "#d9c8f2", "#ffc89e"];
+function colorDeMateria(materia: string): string {
+  let h = 0;
+  for (const c of materia) h = (h * 31 + c.charCodeAt(0)) | 0;
+  return COLORES[Math.abs(h) % COLORES.length];
+}
+
+const campo = "rounded-xl border border-[var(--linea)] bg-white px-3.5 py-2 text-sm text-[var(--tinta)] outline-none placeholder:text-[var(--tinta-suave)] focus:border-[var(--acento)]";
 
 export function ListaArboles() {
   const router = useRouter();
@@ -43,45 +54,47 @@ export function ListaArboles() {
   for (const r of arboles ?? []) porMateria.set(r.materia, [...(porMateria.get(r.materia) ?? []), r]);
 
   return (
-    <div className="flex flex-col gap-8">
-      <form onSubmit={crear} className="flex flex-wrap items-end gap-2 rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
-        <label className="flex flex-col gap-1 text-xs text-neutral-400">
+    <div className="flex flex-col gap-10">
+      <form onSubmit={crear}
+        className="sombra-caja flex flex-wrap items-end gap-3 rounded-2xl border border-[var(--linea)] bg-[#fffdf8] p-5">
+        <label className="flex flex-col gap-1 text-xs text-[var(--tinta-suave)]">
           Materia
-          <input value={materia} onChange={e => setMateria(e.target.value)} placeholder="Cálculo Diferencial"
-            className="rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-emerald-500" />
+          <input value={materia} onChange={e => setMateria(e.target.value)} placeholder="Cálculo Diferencial" className={campo} />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-neutral-400">
+        <label className="flex flex-col gap-1 text-xs text-[var(--tinta-suave)]">
           Tema
-          <input value={tema} onChange={e => setTema(e.target.value)} placeholder="Límites"
-            className="rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-emerald-500" />
+          <input value={tema} onChange={e => setTema(e.target.value)} placeholder="Límites" className={campo} />
         </label>
         <button disabled={creando || !materia.trim() || !tema.trim()}
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white enabled:hover:bg-emerald-500 disabled:opacity-40">
+          className="rounded-xl bg-[var(--acento)] px-5 py-2 text-sm font-semibold text-white transition enabled:hover:brightness-110 enabled:active:scale-95 disabled:opacity-40">
           {creando ? "Creando…" : "＋ Nuevo árbol"}
         </button>
-        {error && <p className="w-full text-sm text-red-400">{error}</p>}
+        {error && <p className="w-full text-sm text-red-600">{error}</p>}
       </form>
 
-      {arboles === null && <p className="text-neutral-500">Cargando…</p>}
+      {arboles === null && <p className="manuscrita text-2xl text-[var(--tinta-suave)]">preparando la mesa…</p>}
       {arboles?.length === 0 && (
-        <p className="text-neutral-500">Aún no hay árboles. Crea el primero arriba: tú pones las ideas.</p>
+        <p className="manuscrita text-2xl text-[var(--tinta-suave)]">
+          la mesa está vacía — pega tu primer sticky arriba ↑
+        </p>
       )}
 
       {[...porMateria.entries()].map(([m, lista]) => (
         <section key={m}>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">{m}</h2>
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {lista.map(r => (
+          <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--tinta-suave)]">{m}</h2>
+          <ul className="grid gap-5 sm:grid-cols-3">
+            {lista.map((r, i) => (
               <li key={`${r.materia}/${r.tema}`}
-                className="group flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/60 px-4 py-3 hover:border-emerald-600">
-                <a href={`/arbol/${r.materia}/${r.tema}`} className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{r.titulo}</p>
-                  <p className="text-xs text-neutral-500">
-                    {r.nNodos} nodos · {new Date(r.actualizadoEn).toLocaleDateString("es-CO")}
+                style={{ backgroundColor: colorDeMateria(r.materia), transform: `rotate(${((i % 3) - 1) * 1.2}deg)` }}
+                className="sombra-sticky group relative rounded-sm transition-transform hover:rotate-0 hover:scale-[1.03]">
+                <a href={`/arbol/${r.materia}/${r.tema}`} className="block px-4 pb-3 pt-4">
+                  <p className="manuscrita text-2xl leading-tight text-[var(--tinta)]">{r.titulo}</p>
+                  <p className="mt-2 text-xs font-medium text-[rgba(56,52,44,0.55)]">
+                    {r.nNodos} {r.nNodos === 1 ? "idea" : "ideas"} · {new Date(r.actualizadoEn).toLocaleDateString("es-CO")}
                   </p>
                 </a>
                 <button onClick={() => eliminar(r)} title="Enviar a la papelera"
-                  className="ml-3 text-neutral-600 opacity-0 transition group-hover:opacity-100 hover:text-red-400">🗑</button>
+                  className="absolute right-2 top-2 text-[rgba(56,52,44,0.35)] opacity-0 transition group-hover:opacity-100 hover:!text-red-600">✕</button>
               </li>
             ))}
           </ul>

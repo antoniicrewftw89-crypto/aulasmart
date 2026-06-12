@@ -1,20 +1,79 @@
 @import "tailwindcss";
 
-/* AulaSmart es oscuro siempre: el canvas es el protagonista. */
+/* ============================================================
+   AulaSmart — "mesa de estudio"
+   Papel cálido, stickies de colores reales, tinta de rotulador.
+   Una herramienta creativa (Paint/Miro), no un chat oscuro.
+   ============================================================ */
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --papel: #faf6ef;          /* el lienzo: papel hueso cálido */
+  --papel-sombra: #efe8da;
+  --tinta: #38342c;          /* texto: tinta de rotulador, no negro puro */
+  --tinta-suave: #8c8577;
+  --linea: #e3dccc;          /* bordes de tarjetas y cajas */
+  --acento: #2f7d6d;         /* verde pizarra: el color "de la casa" */
+
+  /* La paleta de stickies (la de la caja de herramientas) */
+  --sticky-amarillo: #ffe48a;
+  --sticky-rosa: #ffb9c5;
+  --sticky-menta: #b9e6c4;
+  --sticky-cielo: #b5dcf5;
+  --sticky-lila: #d9c8f2;
+  --sticky-naranja: #ffc89e;
+
+  --background: var(--papel);
+  --foreground: var(--tinta);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-baloo);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--font-baloo), ui-rounded, system-ui, sans-serif;
 }
+
+/* Acentos manuscritos (títulos de árbol, notas al margen) */
+.manuscrita {
+  font-family: var(--font-caveat), cursive;
+}
+
+/* Sombra de papel: los stickies flotan sobre la mesa */
+.sombra-sticky {
+  box-shadow: 0 1px 2px rgba(56, 52, 44, 0.18), 0 6px 14px -6px rgba(56, 52, 44, 0.28);
+}
+.sombra-caja {
+  box-shadow: 0 2px 6px rgba(56, 52, 44, 0.10), 0 12px 28px -12px rgba(56, 52, 44, 0.22);
+}
+
+/* Las líneas del árbol: tinta, no neón */
+.react-flow__edge-path {
+  stroke: var(--tinta-suave);
+  stroke-width: 1.8;
+}
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--acento);
+}
+.react-flow__edge-textbg { fill: var(--papel); }
+.react-flow__edge-text { fill: var(--tinta); font-size: 11px; }
+
+/* Controles y minimapa en papel */
+.react-flow__controls {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--linea);
+}
+.react-flow__controls-button {
+  background: #fffdf8;
+  border-bottom: 1px solid var(--linea);
+  fill: var(--tinta);
+}
+.react-flow__controls-button:hover { background: var(--papel-sombra); }
+.react-flow__minimap { border-radius: 12px; border: 1px solid var(--linea); }
+
+/* Atribución de React Flow: discreta sobre papel */
+.react-flow__attribution { background: transparent; color: var(--tinta-suave); }
