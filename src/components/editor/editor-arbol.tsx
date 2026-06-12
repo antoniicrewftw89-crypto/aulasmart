@@ -30,6 +30,8 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
   const ed = useArbolEditor(materia, tema);
   const [seleccion, setSeleccion] = useState<string | null>(null);
   const [editando, setEditando] = useState<string | null>(null);
+  // Un lienzo recién nacido te recibe escribiendo en su sticky central
+  const [autoEdicionCerrada, setAutoEdicionCerrada] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [asistenteAbierto, setAsistenteAbierto] = useState(false);
   const [aviso, setAviso] = useState("");
@@ -43,7 +45,17 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
   }, []);
 
   const onTexto = useCallback((id: string, texto: string) => ed.editarNodo(id, { texto }), [ed]);
-  const onEditar = useCallback((id: string | null) => setEditando(id), []);
+  const onEditar = useCallback((id: string | null) => {
+    if (id === null) setAutoEdicionCerrada(true);
+    setEditando(id);
+  }, []);
+
+  // Sin formularios: si el lienzo acaba de nacer (solo la raíz, sin texto),
+  // se abre directamente escribiendo en el sticky central.
+  const editandoEfectivo = editando
+    ?? (!autoEdicionCerrada && ed.arbol && ed.arbol.nodos.length === 1 && !raizDe(ed.arbol).texto
+      ? raizDe(ed.arbol).id
+      : null);
 
   const { nodes, edges } = useMemo(() => {
     if (!ed.arbol) return { nodes: [] as Node[], edges: [] as Edge[] };
@@ -57,13 +69,13 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
         selected: n.id === seleccion,
         data: {
           ...n.data,
-          editando: n.id === editando,
+          editando: n.id === editandoEfectivo,
           resaltado: q.length > 1 && n.data.nodo.texto.toLowerCase().includes(q),
           onTexto, onEditar,
         },
       }) as NodoIdeaFlow),
     };
-  }, [ed.arbol, seleccion, editando, busqueda, posDrag, onTexto, onEditar]);
+  }, [ed.arbol, seleccion, editandoEfectivo, busqueda, posDrag, onTexto, onEditar]);
 
   const onNodesChange = useCallback((cambios: NodeChange[]) => {
     for (const c of cambios) {
@@ -164,8 +176,12 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
           ←
         </Link>
         <div className="sombra-caja rounded-xl border border-[var(--linea)] bg-[#fffdf8] px-4 py-1.5">
-          <span className="manuscrita text-2xl leading-none text-[var(--tinta)]">{ed.arbol.titulo}</span>
-          <span className="ml-2 text-xs text-[var(--tinta-suave)]">{ed.arbol.materia}</span>
+          <span className="manuscrita text-2xl leading-none text-[var(--tinta)]">
+            {ed.arbol.titulo || "sin título…"}
+          </span>
+          <span className="ml-2 text-xs text-[var(--tinta-suave)]">
+            {ed.arbol.materia === "ideas" ? "✏ idea suelta" : ed.arbol.materia}
+          </span>
         </div>
       </header>
 

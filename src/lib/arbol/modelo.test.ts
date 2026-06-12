@@ -76,6 +76,15 @@ describe("modelo del árbol", () => {
     expect(a2.nodos[0].notas).toBe("ok");
   });
 
+  it("renombrar la raíz renombra el árbol (el lienzo se hace mientras se trabaja)", () => {
+    const a = base();
+    const a2 = editarNodo(a, raizDe(a).id, { texto: "Límites y continuidad" });
+    expect(a2.titulo).toBe("Límites y continuidad");
+    const a0 = base();
+    const { arbol: a3, nodo: h } = agregarHijo(a0, raizDe(a0).id, "hijo");
+    expect(editarNodo(a3, h.id, { texto: "otro" }).titulo).toBe("Límites"); // un hijo no renombra
+  });
+
   it("validarArbol detecta huérfanos y multi-raíz", () => {
     const a = base();
     const roto = { ...a, nodos: [...a.nodos, { ...a.nodos[0], id: "x", padreId: "no-existe" }] };

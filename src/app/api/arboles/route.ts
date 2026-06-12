@@ -11,18 +11,19 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => null);
+  // Crear es LIBRE: sin body (o vacío) nace un lienzo en blanco al instante,
+  // como abrir Paint. La materia y el título se definen trabajando.
+  // (materia/tema en el body siguen valiendo: es la puerta para Janus.)
+  const body = await req.json().catch(() => ({}));
   const materiaTxt = typeof body?.materia === "string" ? body.materia.trim() : "";
   const temaTxt = typeof body?.tema === "string" ? body.tema.trim() : "";
-  if (!materiaTxt || !temaTxt) {
-    return NextResponse.json({ error: "materia y tema son obligatorios" }, { status: 400 });
-  }
-  const materia = slugificar(materiaTxt);
-  const tema = slugificar(temaTxt);
+
+  const materia = materiaTxt ? slugificar(materiaTxt) : "ideas";
+  const tema = temaTxt ? slugificar(temaTxt) : `lienzo-${Date.now().toString(36)}`;
   if (leerArbol(materia, tema)) {
     return NextResponse.json({ error: `ya existe ${materia}/${tema}` }, { status: 409 });
   }
-  const arbol = crearArbol(materia, tema, temaTxt);
+  const arbol = crearArbol(materia, tema, temaTxt); // sin tema: título vacío, se escribe en la raíz
   guardarArbol(arbol);
   espejarArbol(arbol);
   return NextResponse.json(arbol, { status: 201 });

@@ -55,8 +55,12 @@ export function agregarHermano(a: Arbol, nodoId: string, texto = ""): { arbol: A
 export type CambiosNodo = Partial<Pick<NodoArbol, "texto" | "notas" | "fuentes" | "estado" | "color" | "etiquetas" | "posicion">>;
 
 export function editarNodo(a: Arbol, id: string, cambios: CambiosNodo): Arbol {
-  if (!a.nodos.some(n => n.id === id)) return a;
-  return tocar({ ...a, nodos: a.nodos.map(n => (n.id === id ? { ...n, ...cambios } : n)) });
+  const nodo = a.nodos.find(n => n.id === id);
+  if (!nodo) return a;
+  // El texto de la raíz ES el título del árbol: renombrar el sticky central
+  // renombra el lienzo (así el lienzo "se va haciendo" mientras trabajas).
+  const titulo = nodo.padreId === null && cambios.texto !== undefined ? cambios.texto : a.titulo;
+  return tocar({ ...a, titulo, nodos: a.nodos.map(n => (n.id === id ? { ...n, ...cambios } : n)) });
 }
 
 export function eliminarNodo(a: Arbol, id: string): Arbol {

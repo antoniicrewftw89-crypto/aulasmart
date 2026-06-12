@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { crearArbol } from "../arbol/modelo";
-import { eliminarArbol, guardarArbol, leerArbol, listarArboles, rutaArbol } from "./arboles";
+import { eliminarArbol, guardarArbol, leerArbol, listarArboles, moverArbol, rutaArbol } from "./arboles";
 
 let dir: string;
 beforeEach(() => {
@@ -52,5 +52,23 @@ describe("storage de árboles", () => {
   it("data/ queda como repo git con commits", () => {
     guardarArbol(crearArbol("calculo", "limites", "Límites"));
     expect(fs.existsSync(path.join(dir, ".git"))).toBe(true);
+  });
+
+  it("moverArbol cambia la materia llevándose el árbol y sus artefactos", () => {
+    guardarArbol(crearArbol("ideas", "lienzo-1", "Límites"));
+    fs.writeFileSync(path.join(dir, "arboles", "ideas", "lienzo-1.guion.md"), "guion");
+    const movido = moverArbol("ideas", "lienzo-1", "calculo");
+    expect(movido?.materia).toBe("calculo");
+    expect(leerArbol("calculo", "lienzo-1")?.titulo).toBe("Límites");
+    expect(leerArbol("ideas", "lienzo-1")).toBeNull();
+    expect(fs.existsSync(path.join(dir, "arboles", "calculo", "lienzo-1.guion.md"))).toBe(true);
+    expect(fs.existsSync(path.join(dir, "arboles", "ideas"))).toBe(false); // carpeta vacía fuera
+  });
+
+  it("moverArbol rechaza conflictos y árboles inexistentes", () => {
+    guardarArbol(crearArbol("ideas", "lienzo-1", "A"));
+    guardarArbol(crearArbol("calculo", "lienzo-1", "B"));
+    expect(moverArbol("ideas", "lienzo-1", "calculo")).toBeNull(); // ya existe ahí
+    expect(moverArbol("nada", "nada", "calculo")).toBeNull();
   });
 });

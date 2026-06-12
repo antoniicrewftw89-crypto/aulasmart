@@ -33,6 +33,7 @@ export function CajaHerramientas(props: {
   onAviso: (msg: string) => void;
 }) {
   const [generando, setGenerando] = useState(false);
+  const [ayuda, setAyuda] = useState(false);
 
   async function generar() {
     setGenerando(true);
@@ -52,6 +53,26 @@ export function CajaHerramientas(props: {
       <Herramienta titulo="Reordenar todo con el auto-layout" onClick={props.onReordenar}>
         ⇄
       </Herramienta>
+      <Herramienta titulo="Atajos del lienzo" onClick={() => setAyuda(a => !a)}>
+        ?
+      </Herramienta>
+
+      {ayuda && (
+        <div className="sombra-caja absolute left-14 top-0 w-60 rounded-2xl border border-[var(--linea)] bg-[#fffdf8] p-4 text-xs leading-relaxed text-[var(--tinta)]">
+          <p className="manuscrita mb-2 text-xl">así se usa la mesa</p>
+          <ul className="flex flex-col gap-1.5">
+            <li><b>doble click</b> en el papel → sticky nuevo</li>
+            <li><b>Tab</b> → hijo · <b>Enter</b> → hermano</li>
+            <li><b>doble click</b> en un sticky → escribir</li>
+            <li><b>arrastrar</b> → mover (se queda donde lo dejes)</li>
+            <li><b>arrastrar borde → borde</b> → conectar ideas</li>
+            <li><b>doble click en una flecha</b> → quitarla</li>
+            <li><b>Supr</b> → quitar sticky e hijos</li>
+            <li><b>paleta</b> → pinta el sticky seleccionado</li>
+            <li><b>✨</b> → la IA, solo si tú la llamas</li>
+          </ul>
+        </div>
+      )}
 
       <div className="my-1 h-px w-7 bg-[var(--linea)]" />
 

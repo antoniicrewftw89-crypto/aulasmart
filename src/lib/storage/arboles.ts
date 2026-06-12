@@ -76,6 +76,38 @@ export function guardarArtefacto(materia: string, tema: string, sufijo: string, 
   return destino;
 }
 
+/** Lee un artefacto generado, o null si no existe. */
+export function leerArtefacto(materia: string, tema: string, sufijo: string): string | null {
+  const ruta = path.join(dirArboles(), materia, `${tema}.${sufijo}`);
+  return fs.existsSync(ruta) ? fs.readFileSync(ruta, "utf8") : null;
+}
+
+/**
+ * Cambia la materia de un árbol: mueve el JSON y sus artefactos hermanos
+ * ({tema}.guion.md, etc.) a la carpeta nueva. Null si no existe o hay conflicto.
+ */
+export function moverArbol(materia: string, tema: string, nuevaMateria: string): Arbol | null {
+  const a = leerArbol(materia, tema);
+  if (!a) return null;
+  if (nuevaMateria === materia) return a;
+  if (fs.existsSync(rutaArbol(nuevaMateria, tema))) return null; // ya hay un lienzo con ese nombre allí
+
+  const actualizado: Arbol = { ...a, materia: nuevaMateria, actualizadoEn: new Date().toISOString() };
+  guardarArbol(actualizado); // escribe la copia nueva (atómica)
+
+  const dirViejo = path.join(dirArboles(), materia);
+  fs.rmSync(rutaArbol(materia, tema));
+  for (const f of fs.readdirSync(dirViejo)) {
+    if (f.startsWith(`${tema}.`)) {
+      fs.renameSync(path.join(dirViejo, f), path.join(dirArboles(), nuevaMateria, f));
+    }
+  }
+  if (!fs.readdirSync(dirViejo).length) fs.rmdirSync(dirViejo); // sin carpetas fantasma
+  git(["add", "-A"]);
+  git(["commit", "-m", `mover: ${materia}/${tema} -> ${nuevaMateria}/${tema}`, "--quiet"]);
+  return actualizado;
+}
+
 export function eliminarArbol(materia: string, tema: string): boolean {
   const ruta = rutaArbol(materia, tema);
   if (!fs.existsSync(ruta)) return false;
