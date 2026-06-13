@@ -1,14 +1,11 @@
 // POST /api/ingesta — F5: material (PDF/TXT/pegado) → borrador de árbol.
-// La IA propone (gratis-first); el humano aprueba luego en el modo revisión.
+// La IA propone (multi-modelo: una llamada si cabe, Gemini ~1M si es enorme, o
+// troceado+fusión con Groq); el humano aprueba luego en el modo revisión.
 // Recibe FormData: texto?, archivo?, destino (JSON), proveedor?.
 import { NextResponse } from "next/server";
-import { generateObject } from "ai";
-import { conRouter, SinProveedores, type EleccionProveedor } from "@/lib/ia/proveedores";
-import {
-  EsquemaIngesta, aplicarOutline, construirArbolIngesta, construirPromptIngesta,
-  type RespuestaIngesta,
-} from "@/lib/ingesta/esquema";
-import { recortar } from "@/lib/ingesta/texto";
+import { SinProveedores, type EleccionProveedor } from "@/lib/ia/proveedores";
+import { aplicarOutline, construirArbolIngesta } from "@/lib/ingesta/esquema";
+import { estructurarMaterial } from "@/lib/ingesta/estructurar";
 import { extraerTextoPDF } from "@/lib/ingesta/pdf";
 import { slugificar } from "@/lib/arbol/slug";
 import { guardarArbol, leerArbol } from "@/lib/storage/arboles";
@@ -28,7 +25,7 @@ export async function POST(req: Request) {
   let destino: Destino = { tipo: "nuevo" };
   try { destino = JSON.parse(form.get("destino")?.toString() || '{"tipo":"nuevo"}'); } catch { /* nuevo */ }
 
-  // 1) Texto del material
+  // 1) Texto del material (el tamaño lo gestiona estructurarMaterial: NO se recorta)
   let material = pegado;
   if (archivo && typeof archivo !== "string") {
     const f = archivo as File;
@@ -39,26 +36,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "no se pudo leer el archivo" }, { status: 400 });
     }
   }
-  const { texto, recortado } = recortar(material);
-  if (!texto.trim()) {
+  const texto = material.trim();
+  if (!texto) {
     return NextResponse.json({ error: "el material está vacío o el PDF no tiene texto (¿escaneado?)" }, { status: 400 });
   }
 
-  // 2) IA → outline. Claude solo si lo eliges; sin claves → 503 accionable.
-  let resp: RespuestaIngesta;
+  // 2) IA → outline (multi-modelo). Claude solo si lo eliges; sin claves → 503.
+  let estructura;
   try {
-    const { system, prompt } = construirPromptIngesta(texto);
-    const { resultado } = await conRouter(proveedor, async (model) => {
-      const { object } = await generateObject({ model, schema: EsquemaIngesta, system, prompt });
-      return object;
-    });
-    resp = resultado;
+    estructura = await estructurarMaterial(texto, proveedor);
   } catch (e) {
     if (e instanceof SinProveedores) {
       return NextResponse.json({ error: e.message, sinClave: true }, { status: 503 });
     }
     return NextResponse.json({ error: "la IA no pudo estructurar el material" }, { status: 502 });
   }
+  const { outline, trozos, recortado } = estructura;
 
   // 3) Construir y guardar el borrador (todos los nodos nacen en "borrador")
   if (destino.tipo === "fusionar") {
@@ -67,18 +60,17 @@ export async function POST(req: Request) {
     if (!arbol.nodos.some(n => n.id === destino.nodoId)) {
       return NextResponse.json({ error: "nodo destino inválido" }, { status: 400 });
     }
-    // El doc entra como una rama "= título" bajo el nodo elegido.
-    const fusionado = aplicarOutline(arbol, destino.nodoId, [{ texto: resp.titulo, hijos: resp.ramas }]);
+    const fusionado = aplicarOutline(arbol, destino.nodoId, [{ texto: outline.titulo, hijos: outline.ramas }]);
     guardarArbol(fusionado);
     espejarArbol(fusionado);
-    return NextResponse.json({ ok: true, materia: fusionado.materia, tema: fusionado.tema, recortado });
+    return NextResponse.json({ ok: true, materia: fusionado.materia, tema: fusionado.tema, trozos, recortado });
   }
 
   const materia = "ingesta";
-  const base = slugificar(resp.titulo);
+  const base = slugificar(outline.titulo);
   const tema = leerArbol(materia, base) ? `${base}-${Date.now().toString(36)}` : base;
-  const arbol = construirArbolIngesta(materia, tema, resp);
+  const arbol = construirArbolIngesta(materia, tema, outline);
   guardarArbol(arbol);
   espejarArbol(arbol);
-  return NextResponse.json({ ok: true, materia, tema, recortado }, { status: 201 });
+  return NextResponse.json({ ok: true, materia, tema, trozos, recortado }, { status: 201 });
 }

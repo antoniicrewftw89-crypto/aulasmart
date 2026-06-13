@@ -29,11 +29,16 @@ export const EsquemaIngesta = z.object({
 });
 export type RespuestaIngesta = z.infer<typeof EsquemaIngesta>;
 
-// Forma genérica para recorrer los 3 niveles con una sola función.
-interface OutlineNodo {
+// Forma genérica para recorrer/transformar los 3 niveles con una sola función.
+// Se exporta para que el troceado/fusión (ingesta de docs largos) reusen el tipo.
+export interface NodoOutline {
   texto: string;
   notas?: string;
-  hijos?: OutlineNodo[];
+  hijos?: NodoOutline[];
+}
+export interface Outline {
+  titulo: string;
+  ramas: NodoOutline[];
 }
 
 export function construirPromptIngesta(material: string): { system: string; prompt: string } {
@@ -56,9 +61,9 @@ export function construirPromptIngesta(material: string): { system: string; prom
 }
 
 /** Injerta `ramas` (un outline) bajo `padreId`. PURO: devuelve un Árbol nuevo. */
-export function aplicarOutline(arbol: Arbol, padreId: string, ramas: OutlineNodo[]): Arbol {
+export function aplicarOutline(arbol: Arbol, padreId: string, ramas: NodoOutline[]): Arbol {
   let a = arbol;
-  const insertar = (pid: string, nodos: OutlineNodo[]) => {
+  const insertar = (pid: string, nodos: NodoOutline[]) => {
     for (const n of nodos) {
       const texto = (n.texto ?? "").trim();
       if (!texto) {
@@ -76,8 +81,9 @@ export function aplicarOutline(arbol: Arbol, padreId: string, ramas: OutlineNodo
   return a;
 }
 
-/** Árbol NUEVO desde la respuesta de la IA (raíz = título). PURO. */
-export function construirArbolIngesta(materia: string, tema: string, resp: RespuestaIngesta): Arbol {
-  const base = crearArbol(materia, tema, (resp.titulo ?? "").trim() || "Sin título");
-  return aplicarOutline(base, raizDe(base).id, resp.ramas);
+/** Árbol NUEVO desde un outline (raíz = título). PURO. Acepta la respuesta de
+ *  la IA o el outline ya fusionado de varios trozos (RespuestaIngesta ⊆ Outline). */
+export function construirArbolIngesta(materia: string, tema: string, outline: Outline): Arbol {
+  const base = crearArbol(materia, tema, (outline.titulo ?? "").trim() || "Sin título");
+  return aplicarOutline(base, raizDe(base).id, outline.ramas);
 }

@@ -33,6 +33,26 @@ export function modeloPara(id: IdProveedor): LanguageModel | null {
 export const gratuitosDisponibles = (): IdProveedor[] =>
   (["groq", "gemini"] as const).filter(id => Boolean(clave(id)));
 
+export const tieneClave = (id: IdProveedor): boolean => Boolean(clave(id));
+
+// --- Enrutado por TAREA (no por coste) ------------------------------------- #
+// Cada trabajo prefiere el cerebro que mejor lo hace; gana el primero con clave.
+export type Tarea = "estructurar" | "ingerir-grande" | "verificar";
+
+const PREFERENCIA: Record<Tarea, IdProveedor[]> = {
+  estructurar: ["groq", "gemini"],       // rápido (LPU)
+  "ingerir-grande": ["gemini", "groq"],  // contexto gigante (Gemini ~1M)
+  verificar: ["gemini", "groq"],         // grounding (Gemini) o compound (Groq)
+};
+
+export function modeloParaTarea(tarea: Tarea): { model: LanguageModel; proveedor: IdProveedor } | null {
+  for (const id of PREFERENCIA[tarea]) {
+    const m = modeloPara(id);
+    if (m) return { model: m, proveedor: id };
+  }
+  return null;
+}
+
 export class SinProveedores extends Error {
   constructor(msg: string) { super(msg); this.name = "SinProveedores"; }
 }
