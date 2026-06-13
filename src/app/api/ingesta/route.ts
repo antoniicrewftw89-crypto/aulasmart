@@ -7,6 +7,7 @@ import { SinProveedores, type EleccionProveedor } from "@/lib/ia/proveedores";
 import { aplicarOutline, construirArbolIngesta } from "@/lib/ingesta/esquema";
 import { estructurarMaterial } from "@/lib/ingesta/estructurar";
 import { extraerTextoPDF } from "@/lib/ingesta/pdf";
+import { transcribir, esAudioOVideo } from "@/lib/ingesta/audio";
 import { slugificar } from "@/lib/arbol/slug";
 import { guardarArbol, leerArbol } from "@/lib/storage/arboles";
 import { espejarArbol } from "@/lib/espejo/obsidian";
@@ -25,15 +26,26 @@ export async function POST(req: Request) {
   let destino: Destino = { tipo: "nuevo" };
   try { destino = JSON.parse(form.get("destino")?.toString() || '{"tipo":"nuevo"}'); } catch { /* nuevo */ }
 
-  // 1) Texto del material (el tamaño lo gestiona estructurarMaterial: NO se recorta)
+  // 1) Texto del material (el tamaño lo gestiona estructurarMaterial: NO se recorta).
+  //    PDF → unpdf · audio/vídeo → Whisper (Groq) · resto → texto plano.
   let material = pegado;
   if (archivo && typeof archivo !== "string") {
     const f = archivo as File;
-    const esPdf = f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
+    const nombre = f.name.toLowerCase();
+    const esPdf = f.type === "application/pdf" || nombre.endsWith(".pdf");
     try {
-      material = esPdf ? await extraerTextoPDF(await f.arrayBuffer()) : await f.text();
-    } catch {
-      return NextResponse.json({ error: "no se pudo leer el archivo" }, { status: 400 });
+      if (esAudioOVideo(nombre, f.type)) {
+        material = await transcribir(new Uint8Array(await f.arrayBuffer()));
+      } else if (esPdf) {
+        material = await extraerTextoPDF(await f.arrayBuffer());
+      } else {
+        material = await f.text();
+      }
+    } catch (e) {
+      if (e instanceof SinProveedores) {
+        return NextResponse.json({ error: e.message, sinClave: true }, { status: 503 });
+      }
+      return NextResponse.json({ error: "no se pudo leer/transcribir el archivo" }, { status: 400 });
     }
   }
   const texto = material.trim();

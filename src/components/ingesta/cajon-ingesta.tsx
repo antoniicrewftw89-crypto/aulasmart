@@ -64,7 +64,8 @@ export function CajonIngesta(props: {
           <button onClick={props.onCerrar} className="text-[var(--tinta-suave)] hover:text-[var(--tinta)]">✕</button>
         </div>
         <p className="mb-4 text-sm text-[var(--tinta-suave)]">
-          Pega un texto o suelta un PDF/TXT. La IA propone un árbol que tú apruebas — no escribe nada sin tu visto bueno.
+          Pega texto, suelta un PDF/TXT o un <b>audio/vídeo de clase</b> (se transcribe solo).
+          La IA propone un árbol que tú apruebas — no escribe nada sin tu visto bueno.
         </p>
 
         <textarea
@@ -79,11 +80,13 @@ export function CajonIngesta(props: {
             onClick={() => fileRef.current?.click()}
             className="rounded-xl border border-[var(--linea)] bg-[#fffdf8] px-4 py-2 text-sm text-[var(--tinta)] hover:bg-[var(--papel-sombra)]"
           >
-            📎 Elegir PDF/TXT
+            📎 Elegir archivo
           </button>
-          <span className="truncate text-xs text-[var(--tinta-suave)]">{archivo ? archivo.name : "ningún archivo"}</span>
+          <span className="truncate text-xs text-[var(--tinta-suave)]">{archivo ? archivo.name : "PDF · audio · vídeo · TXT"}</span>
           <input
-            ref={fileRef} type="file" accept=".pdf,.txt,text/plain,application/pdf" className="hidden"
+            ref={fileRef} type="file"
+            accept=".pdf,.txt,text/plain,application/pdf,audio/*,video/*,.mp3,.m4a,.wav,.ogg,.mp4,.webm"
+            className="hidden"
             onChange={e => setArchivo(e.target.files?.[0] ?? null)}
           />
         </div>
@@ -105,7 +108,7 @@ export function CajonIngesta(props: {
             onClick={ingerir} disabled={cargando}
             className="rounded-xl bg-[var(--acento)] px-6 py-2 text-sm font-semibold text-white transition hover:brightness-110 active:scale-95 disabled:opacity-50"
           >
-            {cargando ? "Pensando el árbol…" : "Crear borrador →"}
+            {cargando ? "Procesando… (el audio tarda un poco)" : "Crear borrador →"}
           </button>
         </div>
       </div>
