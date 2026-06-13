@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { crearArbol } from "../arbol/modelo";
-import { eliminarArbol, guardarArbol, leerArbol, listarArboles, moverArbol, rutaArbol } from "./arboles";
+import { eliminarArbol, guardarArbol, guardarProgreso, leerArbol, leerProgreso, listarArboles, moverArbol, rutaArbol } from "./arboles";
 
 let dir: string;
 beforeEach(() => {
@@ -70,5 +70,13 @@ describe("storage de árboles", () => {
     guardarArbol(crearArbol("calculo", "lienzo-1", "B"));
     expect(moverArbol("ideas", "lienzo-1", "calculo")).toBeNull(); // ya existe ahí
     expect(moverArbol("nada", "nada", "calculo")).toBeNull();
+  });
+
+  it("progreso de repaso se guarda y se lee; vacío por defecto", () => {
+    expect(leerProgreso("calculo", "limites")).toEqual({});
+    guardarProgreso("calculo", "limites", { abc: { caja: 2, proximoRepaso: "2026-06-14", aciertos: 1, fallos: 0 } });
+    expect(leerProgreso("calculo", "limites")).toEqual({
+      abc: { caja: 2, proximoRepaso: "2026-06-14", aciertos: 1, fallos: 0 },
+    });
   });
 });

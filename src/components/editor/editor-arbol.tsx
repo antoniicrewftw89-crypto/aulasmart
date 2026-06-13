@@ -3,7 +3,8 @@
 // herramientas a la izquierda (con paleta tipo Paint) y la IA en su cajón ✨.
 // Teclado: Tab hijo · Enter hermano · F2/doble-click editar · Supr quitar.
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Background, BackgroundVariant, Controls, MiniMap, ReactFlow, ReactFlowProvider,
   type Connection, type Edge, type Node, type NodeChange, useReactFlow,
@@ -37,7 +38,17 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
   const [aviso, setAviso] = useState("");
   // Posiciones "en vivo" durante el drag (antes de commitear al árbol)
   const [posDrag, setPosDrag] = useState<Record<string, { x: number; y: number }>>({});
+  const [pendientesRepaso, setPendientesRepaso] = useState(0);
   const flow = useReactFlow();
+  const router = useRouter();
+
+  // Cuántas tarjetas tocan hoy (badge del botón de repaso). Se recalcula al cargar.
+  useEffect(() => {
+    fetch(`/api/arboles/${materia}/${tema}/repaso`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(d => { if (d) setPendientesRepaso(d.pendientes); })
+      .catch(() => {});
+  }, [materia, tema, ed.arbol]);
 
   const avisar = useCallback((msg: string) => {
     setAviso(msg);
@@ -198,9 +209,11 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
 
       <CajaHerramientas
         haySeleccion={Boolean(nodoSel)}
+        pendientesRepaso={pendientesRepaso}
         onNuevoSticky={() => { if (ed.arbol) crearHijo(seleccion ?? raizDe(ed.arbol).id); }}
         onPintar={color => { if (nodoSel) ed.editarNodo(nodoSel.id, { color }); }}
         onReordenar={ed.reordenar}
+        onRepasar={() => router.push(`/arbol/${materia}/${tema}/repaso`)}
         onGenerarGuion={async () => {
           try {
             const res = await fetch(`/api/arboles/${materia}/${tema}/generar/guion`, { method: "POST" });

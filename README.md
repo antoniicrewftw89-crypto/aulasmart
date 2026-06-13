@@ -90,6 +90,18 @@ Sin claves, los botones explican qué falta y el resto de la app no se entera.
 - **F2 — Guion de estudio desde el árbol** ✅ — botón **📜 Guion**: recorre tu
   árbol y escribe `{tema}.guion.md` (secciones por rama, checklist de los ⚠️
   dudosos y fuentes) junto al árbol y en la bóveda
+- **F3 — Flashcards con repaso Leitner** ✅ — botón **🎴** (con badge de cuántas
+  tocan hoy): cada nodo es una tarjeta (anverso = la idea, reverso = tus notas
+  y sub-conceptos). Aciertas → la tarjeta sube de caja y vuelve más tarde;
+  fallas → vuelve mañana. El progreso se guarda en `{tema}.repaso.json` (no se
+  espeja: es estado de estudio, no conocimiento). Atajos: Espacio voltea, ←/→ responden
 - **F3** — Quiz/flashcards (repaso Leitner) desde el árbol
 - **F4** — Slides desde el árbol
 - **F5** — Ingesta: PDF → borrador de árbol que apruebas nodo a nodo
+
+## El editor (atajos)
+
+Botón **🎴** abre el modo repaso a pantalla completa. En el lienzo: doble click
+crea sticky, `Tab` hijo, `Enter` hermano, `F2` editar, `Supr` borrar, arrastrar
+mueve, arrastrar borde→borde conecta, la paleta pinta el sticky seleccionado,
+**✨** abre el ayudante IA (solo si lo llamas).

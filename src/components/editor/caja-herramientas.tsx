@@ -26,10 +26,12 @@ function Herramienta(props: {
 
 export function CajaHerramientas(props: {
   haySeleccion: boolean;
+  pendientesRepaso: number;
   onNuevoSticky: () => void;
   onPintar: (color: string) => void;
   onReordenar: () => void;
   onGenerarGuion: () => Promise<string | null>;
+  onRepasar: () => void;
   onAviso: (msg: string) => void;
 }) {
   const [generando, setGenerando] = useState(false);
@@ -50,6 +52,16 @@ export function CajaHerramientas(props: {
       <Herramienta titulo={generando ? "Generando guion…" : "Generar guion de estudio desde tu árbol"} onClick={generar} deshabilitada={generando}>
         {generando ? "⏳" : "📜"}
       </Herramienta>
+      <div className="relative">
+        <Herramienta titulo="Repasar con flashcards (Leitner)" onClick={props.onRepasar}>
+          🎴
+        </Herramienta>
+        {props.pendientesRepaso > 0 && (
+          <span className="pointer-events-none absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--acento)] px-1 text-[10px] font-bold text-white">
+            {props.pendientesRepaso}
+          </span>
+        )}
+      </div>
       <Herramienta titulo="Reordenar todo con el auto-layout" onClick={props.onReordenar}>
         ⇄
       </Herramienta>

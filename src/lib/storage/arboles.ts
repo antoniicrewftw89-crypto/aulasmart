@@ -82,6 +82,35 @@ export function leerArtefacto(materia: string, tema: string, sufijo: string): st
   return fs.existsSync(ruta) ? fs.readFileSync(ruta, "utf8") : null;
 }
 
+// --- Progreso de repaso (Leitner) ---------------------------------------- #
+// Vive aparte del árbol: es estado de estudio, no conocimiento. No se espeja
+// a Obsidian. Mapa { nodoId: ProgresoNodo }.
+
+function rutaProgreso(materia: string, tema: string): string {
+  return path.join(dirArboles(), materia, `${tema}.repaso.json`);
+}
+
+export function leerProgreso(materia: string, tema: string): Record<string, unknown> {
+  const ruta = rutaProgreso(materia, tema);
+  if (!fs.existsSync(ruta)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(ruta, "utf8")) as Record<string, unknown>;
+  } catch {
+    return {}; // progreso corrupto: arrancar limpio (no es conocimiento que duela perder)
+  }
+}
+
+export function guardarProgreso(materia: string, tema: string, progreso: Record<string, unknown>): void {
+  asegurarRepo();
+  const destino = rutaProgreso(materia, tema);
+  fs.mkdirSync(path.dirname(destino), { recursive: true });
+  const tmp = `${destino}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, JSON.stringify(progreso, null, 2), "utf8");
+  fs.renameSync(tmp, destino);
+  git(["add", "-A"]);
+  git(["commit", "-m", `repaso: ${materia}/${tema}`, "--quiet"]);
+}
+
 /**
  * Cambia la materia de un árbol: mueve el JSON y sus artefactos hermanos
  * ({tema}.guion.md, etc.) a la carpeta nueva. Null si no existe o hay conflicto.
