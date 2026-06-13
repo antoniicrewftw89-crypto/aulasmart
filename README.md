@@ -79,6 +79,11 @@ las **notas** del nodo con sus **fuentes**, y el estado pasa a ✅/⚠️ según
 veredicto. Selector **Auto (gratis)** — rota Groq → Gemini — o **Claude
 (pago)**, que *solo* responde si tú lo eliges; jamás por fallback.
 
+**Verdad con citas (grounding):** si hay clave de Gemini, Verificar/Investigar
+usa la **búsqueda web** de Gemini (`google_search`) y las **fuentes son reales**
+(URLs que el modelo consultó), no inventadas. Sin clave Gemini, cae al verificar
+normal.
+
 Claves: copia `.env.example` a `.env.local` y rellena las que tengas
 (`GROQ_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `ANTHROPIC_API_KEY`).
 Sin claves, los botones explican qué falta y el resto de la app no se entera.
@@ -108,11 +113,19 @@ Sin claves, los botones explican qué falta y el resto de la app no se entera.
   (presentación **Marp**: portada, índice, una slide por rama, repaso de los ⚠️
   dudosos y fuentes) junto al árbol y en la bóveda. Ábrela con Marp.
 - **F5 — Ingesta: material → borrador de árbol que apruebas** ✅ — botón **📥**
-  (inicio y caja de herramientas): pega texto o suelta un **PDF/TXT** y la IA
-  (gratis-first; PDF vía `unpdf`) propone un árbol que aterriza en estado
-  `borrador`. Llegas al editor en **modo revisión**: ✅ aceptar todo · ➡ ir nodo
-  a nodo · o editar libre, y **Hecho**. Destino: árbol nuevo o fusionar como
-  rama de un tema. Sin clave, te dice qué falta; la IA jamás aprueba por ti.
+  (inicio y caja de herramientas): pega texto, suelta un **PDF/TXT** o un
+  **audio/vídeo de clase** (se transcribe con **Whisper/Groq**) y la IA propone
+  un árbol en estado `borrador`. Llegas al editor en **modo revisión**: ✅ aceptar
+  todo · ➡ ir nodo a nodo · o editar libre, y **Hecho**. Destino: árbol nuevo o
+  fusionar como rama. Sin clave, te dice qué falta; la IA jamás aprueba por ti.
+
+### Motor multi-modelo (el mejor cerebro por tarea)
+La ingesta **no recorta**: enruta por tarea, no por coste —
+- **Transcribir** audio/vídeo → **Groq Whisper** (rápido, gratis).
+- **Documento enorme** → **Gemini Flash** (~1M de contexto, sin trocear) si hay
+  clave; si solo hay Groq, **trocea → estructura → fusiona** (con reintentos).
+- **Estructurar** rápido → **Groq Llama 3.3 70B**. **Verificar con citas** →
+  **Gemini grounding**. **Máxima calidad** (opt-in) → **Claude**.
 
 ## El editor (atajos)
 

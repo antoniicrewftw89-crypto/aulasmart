@@ -2,8 +2,9 @@
 // La única puerta por la que la IA toca un árbol — y siempre a petición humana.
 import { NextResponse } from "next/server";
 import { generateObject } from "ai";
-import { aplicarRespuesta, construirPrompt, EsquemaRespuestaIA, type AccionIA } from "@/lib/ia/acciones-nodo";
+import { aplicarRespuesta, construirPrompt, EsquemaRespuestaIA, type AccionIA, type RespuestaIA } from "@/lib/ia/acciones-nodo";
 import { conRouter, SinProveedores, type EleccionProveedor } from "@/lib/ia/proveedores";
+import { verificarConGrounding } from "@/lib/ia/grounding";
 import { guardarArbol, leerArbol } from "@/lib/storage/arboles";
 import { espejarArbol } from "@/lib/espejo/obsidian";
 
@@ -26,17 +27,31 @@ export async function POST(req: Request, { params }: Params) {
 
   const { system, prompt } = construirPrompt(accion as AccionIA, arbol, nodo);
   try {
-    const { resultado, proveedor } = await conRouter(eleccion, model =>
-      generateObject({ model, schema: EsquemaRespuestaIA, system, prompt }),
-    );
-    const actualizado = aplicarRespuesta(arbol, nodoId, resultado.object, new Date().toISOString());
+    let respuesta: RespuestaIA;
+    let proveedor: string;
+
+    // Camino preferente: grounding (Gemini busca en la web → fuentes REALES).
+    // Solo en auto o gemini; si falla o no hay clave Gemini, cae al verificar normal.
+    let conCitas: RespuestaIA | null = null;
+    if (eleccion === "auto" || eleccion === "gemini") {
+      try { conCitas = await verificarConGrounding(system, prompt); } catch { conCitas = null; }
+    }
+
+    if (conCitas) {
+      respuesta = conCitas;
+      proveedor = "gemini (web)";
+    } else {
+      const { resultado, proveedor: p } = await conRouter(eleccion, model =>
+        generateObject({ model, schema: EsquemaRespuestaIA, system, prompt }),
+      );
+      respuesta = resultado.object;
+      proveedor = p;
+    }
+
+    const actualizado = aplicarRespuesta(arbol, nodoId, respuesta, new Date().toISOString());
     guardarArbol(actualizado);
     espejarArbol(actualizado);
-    return NextResponse.json({
-      arbol: actualizado,
-      proveedor,
-      respuesta: resultado.object,
-    });
+    return NextResponse.json({ arbol: actualizado, proveedor, respuesta });
   } catch (e) {
     if (e instanceof SinProveedores) {
       return NextResponse.json({ error: e.message }, { status: 503 });
