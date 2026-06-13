@@ -281,6 +281,17 @@ function Lienzo({ materia, tema, revisarInicial }: { materia: string; tema: stri
             return "🧩 tu árbol ya está bastante completo (sin huecos nuevos)";
           } catch { return "⚠ sin conexión con el servidor"; }
         }}
+        onConectar={async () => {
+          try {
+            const res = await fetch(`/api/arboles/${materia}/${tema}/conexiones`, {
+              method: "POST", headers: { "Content-Type": "application/json" }, body: "{}",
+            });
+            const data = await res.json();
+            if (!res.ok) return data.sinClave ? "⚠ necesita clave de IA (Groq/Gemini)" : `⚠ ${data.error ?? "no se pudo"}`;
+            if (data.anadidas > 0) { ed.reemplazarArbol(data.arbol); return `🔗 ${data.anadidas} conexiones nuevas`; }
+            return "🔗 no encontró conexiones nuevas que valgan la pena";
+          } catch { return "⚠ sin conexión con el servidor"; }
+        }}
         onIngerir={() => setCajonIngesta(true)}
         onAviso={avisar}
       />

@@ -34,6 +34,7 @@ export function CajaHerramientas(props: {
   onGenerarSlides: () => Promise<string | null>;
   onGenerarMazo: () => Promise<string>;
   onCompletar: () => Promise<string>;
+  onConectar: () => Promise<string>;
   onRepasar: () => void;
   onIngerir: () => void;
   onAviso: (msg: string) => void;
@@ -42,6 +43,7 @@ export function CajaHerramientas(props: {
   const [generandoSlides, setGenerandoSlides] = useState(false);
   const [generandoMazo, setGenerandoMazo] = useState(false);
   const [completando, setCompletando] = useState(false);
+  const [conectando, setConectando] = useState(false);
   const [ayuda, setAyuda] = useState(false);
 
   async function generar() {
@@ -74,6 +76,14 @@ export function CajaHerramientas(props: {
     props.onAviso(aviso);
   }
 
+  async function conectar() {
+    setConectando(true);
+    props.onAviso("🔗 Buscando conexiones…");
+    const aviso = await props.onConectar();
+    setConectando(false);
+    props.onAviso(aviso);
+  }
+
   return (
     <aside className="sombra-caja absolute left-4 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-1 rounded-2xl border border-[var(--linea)] bg-[#fffdf8] p-2">
       <Herramienta titulo="Nuevo sticky (Tab = hijo · Enter = hermano · doble click en el lienzo)" onClick={props.onNuevoSticky}>
@@ -103,6 +113,9 @@ export function CajaHerramientas(props: {
       </Herramienta>
       <Herramienta titulo={completando ? "Buscando huecos…" : "Completar huecos: la IA propone los conceptos que faltan (los apruebas tú)"} onClick={completar} deshabilitada={completando}>
         {completando ? "⏳" : "🧩"}
+      </Herramienta>
+      <Herramienta titulo={conectando ? "Buscando conexiones…" : "Conexiones automáticas: la IA enlaza ideas relacionadas de ramas distintas"} onClick={conectar} deshabilitada={conectando}>
+        {conectando ? "⏳" : "🔗"}
       </Herramienta>
       <Herramienta titulo="Reordenar todo con el auto-layout" onClick={props.onReordenar}>
         ⇄

@@ -123,6 +123,9 @@ Sin claves, los botones explican qué falta y el resto de la app no se entera.
   árbol y propone los conceptos que **faltan** (descartando lo que ya tienes).
   Entran en `borrador` y los apruebas con la misma barra de revisión. La IA
   trabaja tu árbol; tú decides qué entra.
+- **🔗 Conexiones automáticas** ✅ — la IA enlaza ideas relacionadas de **ramas
+  distintas** (no padre-hijo) y las dibuja como flechas con etiqueta. Cada par lo
+  valida `conectar` (sin duplicar ni conectar emparentados).
 
 ### Motor multi-modelo (el mejor cerebro por tarea)
 La ingesta **no recorta**: enruta por tarea, no por coste —
