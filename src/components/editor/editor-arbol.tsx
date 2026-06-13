@@ -17,6 +17,8 @@ import { NodoIdea, type NodoIdeaFlow } from "./nodo-idea";
 import { PanelNodo } from "./panel-nodo";
 import { CajaHerramientas } from "./caja-herramientas";
 import { CajonAsistente } from "./cajon-asistente";
+import { CajonIngesta } from "@/components/ingesta/cajon-ingesta";
+import { BarraRevision } from "@/components/ingesta/barra-revision";
 
 const tiposDeNodo = { idea: NodoIdea };
 
@@ -27,7 +29,7 @@ const CHIP_GUARDADO: Record<EstadoGuardado, [string, string]> = {
   error: ["⚠ Error al guardar", "text-red-600"],
 };
 
-function Lienzo({ materia, tema }: { materia: string; tema: string }) {
+function Lienzo({ materia, tema, revisarInicial }: { materia: string; tema: string; revisarInicial?: boolean }) {
   const ed = useArbolEditor(materia, tema);
   const [seleccion, setSeleccion] = useState<string | null>(null);
   const [editando, setEditando] = useState<string | null>(null);
@@ -41,6 +43,9 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
   const [pendientesRepaso, setPendientesRepaso] = useState(0);
   const flow = useReactFlow();
   const router = useRouter();
+  // Modo revisión: se entra al llegar de una ingesta (?revisar=1, leído en el server).
+  const [revisando, setRevisando] = useState(Boolean(revisarInicial));
+  const [cajonIngesta, setCajonIngesta] = useState(false);
 
   // Cuántas tarjetas tocan hoy (badge del botón de repaso). Se recalcula al cargar.
   useEffect(() => {
@@ -54,6 +59,16 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
     setAviso(msg);
     setTimeout(() => setAviso(""), 3500);
   }, []);
+
+  // Revisión: marcar TODO el borrador como verificado de una (una sola escritura).
+  const marcarTodoVerificado = useCallback(() => {
+    if (!ed.arbol) return;
+    ed.reemplazarArbol({
+      ...ed.arbol,
+      nodos: ed.arbol.nodos.map(n =>
+        n.padreId !== null && n.estado === "borrador" ? { ...n, estado: "verificado" } : n),
+    });
+  }, [ed]);
 
   const onTexto = useCallback((id: string, texto: string) => ed.editarNodo(id, { texto }), [ed]);
   const onEditar = useCallback((id: string | null) => {
@@ -251,7 +266,28 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
             return res.ok ? null : (data.error ?? "no se pudo generar");
           } catch { return "sin conexión con el servidor"; }
         }}
+        onIngerir={() => setCajonIngesta(true)}
         onAviso={avisar}
+      />
+
+      {revisando && ed.arbol && (
+        <BarraRevision
+          arbol={ed.arbol}
+          seleccionId={seleccion}
+          onSeleccionar={setSeleccion}
+          onAceptar={id => ed.editarNodo(id, { estado: "verificado" })}
+          onAceptarTodo={marcarTodoVerificado}
+          onQuitar={id => { ed.eliminarNodo(id); setSeleccion(null); }}
+          onHecho={() => { setRevisando(false); router.replace(`/arbol/${materia}/${tema}`); }}
+        />
+      )}
+
+      <CajonIngesta
+        abierto={cajonIngesta}
+        onCerrar={() => setCajonIngesta(false)}
+        materiaActual={materia}
+        temaActual={tema}
+        nodoDestinoId={seleccion ?? (ed.arbol ? raizDe(ed.arbol).id : undefined)}
       />
 
       {nodoSel && !asistenteAbierto && (
@@ -289,7 +325,7 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
   );
 }
 
-export function EditorArbol(props: { materia: string; tema: string }) {
+export function EditorArbol(props: { materia: string; tema: string; revisarInicial?: boolean }) {
   return (
     <ReactFlowProvider>
       <Lienzo {...props} />

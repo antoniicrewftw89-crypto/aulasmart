@@ -107,7 +107,12 @@ Sin claves, los botones explican qué falta y el resto de la app no se entera.
 - **F4 — Slides desde el árbol** ✅ — botón **🖼** genera `{tema}.slides.md`
   (presentación **Marp**: portada, índice, una slide por rama, repaso de los ⚠️
   dudosos y fuentes) junto al árbol y en la bóveda. Ábrela con Marp.
-- **F5** — Ingesta: PDF → borrador de árbol que apruebas nodo a nodo
+- **F5 — Ingesta: material → borrador de árbol que apruebas** ✅ — botón **📥**
+  (inicio y caja de herramientas): pega texto o suelta un **PDF/TXT** y la IA
+  (gratis-first; PDF vía `unpdf`) propone un árbol que aterriza en estado
+  `borrador`. Llegas al editor en **modo revisión**: ✅ aceptar todo · ➡ ir nodo
+  a nodo · o editar libre, y **Hecho**. Destino: árbol nuevo o fusionar como
+  rama de un tema. Sin clave, te dice qué falta; la IA jamás aprueba por ti.
 
 ## El editor (atajos)
 

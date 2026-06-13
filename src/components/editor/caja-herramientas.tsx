@@ -34,6 +34,7 @@ export function CajaHerramientas(props: {
   onGenerarSlides: () => Promise<string | null>;
   onGenerarMazo: () => Promise<string>;
   onRepasar: () => void;
+  onIngerir: () => void;
   onAviso: (msg: string) => void;
 }) {
   const [generando, setGenerando] = useState(false);
@@ -67,6 +68,9 @@ export function CajaHerramientas(props: {
     <aside className="sombra-caja absolute left-4 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-1 rounded-2xl border border-[var(--linea)] bg-[#fffdf8] p-2">
       <Herramienta titulo="Nuevo sticky (Tab = hijo · Enter = hermano · doble click en el lienzo)" onClick={props.onNuevoSticky}>
         ➕
+      </Herramienta>
+      <Herramienta titulo="Ingerir material (PDF/TXT/texto) → borrador de árbol que apruebas" onClick={props.onIngerir}>
+        📥
       </Herramienta>
       <Herramienta titulo={generando ? "Generando guion…" : "Generar guion de estudio desde tu árbol"} onClick={generar} deshabilitada={generando}>
         {generando ? "⏳" : "📜"}
