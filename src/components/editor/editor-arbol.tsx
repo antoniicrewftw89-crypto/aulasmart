@@ -266,6 +266,21 @@ function Lienzo({ materia, tema, revisarInicial }: { materia: string; tema: stri
             return res.ok ? null : (data.error ?? "no se pudo generar");
           } catch { return "sin conexión con el servidor"; }
         }}
+        onCompletar={async () => {
+          try {
+            const res = await fetch(`/api/arboles/${materia}/${tema}/completar`, {
+              method: "POST", headers: { "Content-Type": "application/json" }, body: "{}",
+            });
+            const data = await res.json();
+            if (!res.ok) return data.sinClave ? "⚠ necesita clave de IA (Groq/Gemini)" : `⚠ ${data.error ?? "no se pudo"}`;
+            if (data.anadidos > 0) {
+              ed.reemplazarArbol(data.arbol);
+              setRevisando(true);
+              return `🧩 ${data.anadidos} ideas nuevas — revísalas`;
+            }
+            return "🧩 tu árbol ya está bastante completo (sin huecos nuevos)";
+          } catch { return "⚠ sin conexión con el servidor"; }
+        }}
         onIngerir={() => setCajonIngesta(true)}
         onAviso={avisar}
       />

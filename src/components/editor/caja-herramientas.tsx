@@ -33,6 +33,7 @@ export function CajaHerramientas(props: {
   onGenerarGuion: () => Promise<string | null>;
   onGenerarSlides: () => Promise<string | null>;
   onGenerarMazo: () => Promise<string>;
+  onCompletar: () => Promise<string>;
   onRepasar: () => void;
   onIngerir: () => void;
   onAviso: (msg: string) => void;
@@ -40,6 +41,7 @@ export function CajaHerramientas(props: {
   const [generando, setGenerando] = useState(false);
   const [generandoSlides, setGenerandoSlides] = useState(false);
   const [generandoMazo, setGenerandoMazo] = useState(false);
+  const [completando, setCompletando] = useState(false);
   const [ayuda, setAyuda] = useState(false);
 
   async function generar() {
@@ -61,6 +63,14 @@ export function CajaHerramientas(props: {
     props.onAviso("🪄 Generando preguntas…");
     const aviso = await props.onGenerarMazo();
     setGenerandoMazo(false);
+    props.onAviso(aviso);
+  }
+
+  async function completar() {
+    setCompletando(true);
+    props.onAviso("🧩 Buscando lo que falta…");
+    const aviso = await props.onCompletar();
+    setCompletando(false);
     props.onAviso(aviso);
   }
 
@@ -90,6 +100,9 @@ export function CajaHerramientas(props: {
       </div>
       <Herramienta titulo={generandoMazo ? "Generando preguntas…" : "Generar preguntas (opción múltiple) desde tu árbol — IA si hay clave, básico si no"} onClick={generarMazo} deshabilitada={generandoMazo}>
         {generandoMazo ? "⏳" : "🪄"}
+      </Herramienta>
+      <Herramienta titulo={completando ? "Buscando huecos…" : "Completar huecos: la IA propone los conceptos que faltan (los apruebas tú)"} onClick={completar} deshabilitada={completando}>
+        {completando ? "⏳" : "🧩"}
       </Herramienta>
       <Herramienta titulo="Reordenar todo con el auto-layout" onClick={props.onReordenar}>
         ⇄
