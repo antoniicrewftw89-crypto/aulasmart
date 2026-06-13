@@ -100,8 +100,13 @@ Sin claves, los botones explican qué falta y el resto de la app no se entera.
   hermanos como distractores. La sesión de repaso tiene **volteo 3D**, opción
   múltiple con feedback verde/rojo y barra de progreso. Mazo en `{tema}.tarjetas.json`.
   Atajos: Espacio voltea, 1-4 eligen opción, ←/→ responden.
-- **F3** — Quiz/flashcards (repaso Leitner) desde el árbol
-- **F4** — Slides desde el árbol
+- **F3.2 — Estadísticas + "repasar todo"** ✅ — al terminar (o si hoy no toca
+  nada) ves un panel con tu progreso por caja Leitner y el % dominado, y un botón
+  **Repasar todo** que ignora el calendario para repasar el tema entero antes de
+  un examen. Además, CLI headless `pnpm pendientes` que Janus usa para avisarte.
+- **F4 — Slides desde el árbol** ✅ — botón **🖼** genera `{tema}.slides.md`
+  (presentación **Marp**: portada, índice, una slide por rama, repaso de los ⚠️
+  dudosos y fuentes) junto al árbol y en la bóveda. Ábrela con Marp.
 - **F5** — Ingesta: PDF → borrador de árbol que apruebas nodo a nodo
 
 ## El editor (atajos)

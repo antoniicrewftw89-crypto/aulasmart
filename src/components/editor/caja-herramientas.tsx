@@ -31,11 +31,13 @@ export function CajaHerramientas(props: {
   onPintar: (color: string) => void;
   onReordenar: () => void;
   onGenerarGuion: () => Promise<string | null>;
+  onGenerarSlides: () => Promise<string | null>;
   onGenerarMazo: () => Promise<string>;
   onRepasar: () => void;
   onAviso: (msg: string) => void;
 }) {
   const [generando, setGenerando] = useState(false);
+  const [generandoSlides, setGenerandoSlides] = useState(false);
   const [generandoMazo, setGenerandoMazo] = useState(false);
   const [ayuda, setAyuda] = useState(false);
 
@@ -44,6 +46,13 @@ export function CajaHerramientas(props: {
     const error = await props.onGenerarGuion();
     setGenerando(false);
     props.onAviso(error ? `⚠ ${error}` : "📜 Guion guardado en data/ y en tu bóveda");
+  }
+
+  async function generarSlides() {
+    setGenerandoSlides(true);
+    const error = await props.onGenerarSlides();
+    setGenerandoSlides(false);
+    props.onAviso(error ? `⚠ ${error}` : "🖼 Slides guardadas en data/ y en tu bóveda (ábrelas con Marp)");
   }
 
   async function generarMazo() {
@@ -61,6 +70,9 @@ export function CajaHerramientas(props: {
       </Herramienta>
       <Herramienta titulo={generando ? "Generando guion…" : "Generar guion de estudio desde tu árbol"} onClick={generar} deshabilitada={generando}>
         {generando ? "⏳" : "📜"}
+      </Herramienta>
+      <Herramienta titulo={generandoSlides ? "Generando slides…" : "Generar presentación (slides Marp) desde tu árbol"} onClick={generarSlides} deshabilitada={generandoSlides}>
+        {generandoSlides ? "⏳" : "🖼"}
       </Herramienta>
       <div className="relative">
         <Herramienta titulo="Repasar con flashcards (Leitner)" onClick={props.onRepasar}>

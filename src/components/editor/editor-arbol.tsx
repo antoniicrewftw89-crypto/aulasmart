@@ -244,6 +244,13 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
             return res.ok ? null : (data.error ?? "no se pudo generar");
           } catch { return "sin conexión con el servidor"; }
         }}
+        onGenerarSlides={async () => {
+          try {
+            const res = await fetch(`/api/arboles/${materia}/${tema}/generar/slides`, { method: "POST" });
+            const data = await res.json();
+            return res.ok ? null : (data.error ?? "no se pudo generar");
+          } catch { return "sin conexión con el servidor"; }
+        }}
         onAviso={avisar}
       />
 
