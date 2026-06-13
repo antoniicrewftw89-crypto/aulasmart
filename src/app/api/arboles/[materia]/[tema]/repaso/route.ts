@@ -5,24 +5,27 @@
 import { NextResponse } from "next/server";
 import { leerArbol, leerMazo, leerProgreso, guardarProgreso } from "@/lib/storage/arboles";
 import { registrarResultado, estadoInicial, type ProgresoNodo } from "@/lib/repaso/leitner";
-import { sesionDeHoy, pendientesHoy, mazoOEffectivo, type MapaProgreso } from "@/lib/repaso/tarjetas";
+import { sesionRepaso, pendientesHoy, mazoOEffectivo, type MapaProgreso } from "@/lib/repaso/tarjetas";
+import { resumenRepaso } from "@/lib/repaso/estadisticas";
 import type { Mazo } from "@/lib/repaso/tipos-tarjeta";
 
 type Params = { params: Promise<{ materia: string; tema: string }> };
 
 const hoyIso = () => new Date().toISOString().slice(0, 10);
 
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(req: Request, { params }: Params) {
   const { materia, tema } = await params;
   const arbol = leerArbol(materia, tema);
   if (!arbol) return NextResponse.json({ error: "árbol no existe" }, { status: 404 });
   const progreso = leerProgreso(materia, tema) as MapaProgreso;
   const mazo = mazoOEffectivo(arbol, leerMazo(materia, tema) as Mazo | null);
   const hoy = hoyIso();
+  const todo = new URL(req.url).searchParams.get("todo") === "1"; // ?todo=1 → repasar TODO
   return NextResponse.json({
     titulo: arbol.titulo,
-    tarjetas: sesionDeHoy(arbol, mazo, progreso, hoy),
+    tarjetas: sesionRepaso(arbol, mazo, progreso, hoy, { todo }),
     pendientes: pendientesHoy(arbol, mazo, progreso, hoy),
+    resumen: resumenRepaso(arbol, mazo, progreso, hoy),
   });
 }
 

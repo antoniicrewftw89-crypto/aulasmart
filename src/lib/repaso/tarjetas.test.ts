@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { agregarHijo, crearArbol, editarNodo, raizDe } from "../arbol/modelo";
 import { generarMazoDeterminista } from "./generar-tarjetas";
-import { mazoOEffectivo, pendientesHoy, sesionDeHoy, type MapaProgreso } from "./tarjetas";
+import { mazoOEffectivo, pendientesHoy, sesionDeHoy, sesionRepaso, type MapaProgreso } from "./tarjetas";
 
 const HOY = "2026-06-13";
 
@@ -42,6 +42,20 @@ describe("sesionDeHoy", () => {
     const { arbol } = arbolDemo();
     const sesion = sesionDeHoy(arbol, generarMazoDeterminista(arbol), {}, HOY);
     expect(sesion.some(s => s.ruta.includes("Límites"))).toBe(true);
+  });
+});
+
+describe("sesionRepaso (modo repasar todo)", () => {
+  it("con todo:true incluye nodos futuros que sesionDeHoy excluye", () => {
+    const { arbol, defId } = arbolDemo();
+    const mazo = generarMazoDeterminista(arbol);
+    const progreso: MapaProgreso = {
+      [defId]: { caja: 3, proximoRepaso: "2026-07-01", aciertos: 2, fallos: 0 }, // futuro
+    };
+    const hoy = sesionDeHoy(arbol, mazo, progreso, HOY).map(s => s.tarjeta.nodoId);
+    const todo = sesionRepaso(arbol, mazo, progreso, HOY, { todo: true }).map(s => s.tarjeta.nodoId);
+    expect(hoy).not.toContain(defId);
+    expect(todo).toContain(defId);
   });
 });
 

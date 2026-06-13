@@ -37,8 +37,18 @@ function tarjetaPorNodo(mazo: Mazo): Map<string, Tarjeta> {
   return elegida;
 }
 
-/** La sesión de hoy (nuevas + vencidas), las más frágiles primero. */
-export function sesionDeHoy(a: Arbol, mazo: Mazo, progreso: MapaProgreso, hoy: string): TarjetaSesion[] {
+export interface OpcionesSesion {
+  todo?: boolean; // true = repasar TODO el árbol, ignorando el calendario Leitner
+}
+
+/**
+ * La sesión de repaso: una tarjeta representativa por nodo, las más frágiles
+ * primero. Por defecto solo las que tocan hoy (nuevas + vencidas); con
+ * `{ todo: true }` devuelve el árbol entero (modo "repasar todo" pre-examen).
+ */
+export function sesionRepaso(
+  a: Arbol, mazo: Mazo, progreso: MapaProgreso, hoy: string, opciones: OpcionesSesion = {},
+): TarjetaSesion[] {
   const porNodo = tarjetaPorNodo(mazo);
   const idsConTexto = new Set(a.nodos.filter(n => n.texto.trim()).map(n => n.id));
   const porId = new Map(a.nodos.map(n => [n.id, n]));
@@ -46,10 +56,15 @@ export function sesionDeHoy(a: Arbol, mazo: Mazo, progreso: MapaProgreso, hoy: s
   for (const [nodoId, tarjeta] of porNodo) {
     if (!idsConTexto.has(nodoId)) continue; // nodo borrado/sin texto: la tarjeta queda obsoleta
     const progresoNodo = progreso[nodoId] ?? estadoInicial(hoy);
-    if (!tocaHoy(progresoNodo, hoy)) continue;
+    if (!opciones.todo && !tocaHoy(progresoNodo, hoy)) continue;
     sesion.push({ tarjeta, progreso: progresoNodo, ruta: rutaTexto(a, porId.get(nodoId)!) });
   }
   return sesion.sort((x, y) => x.progreso.caja - y.progreso.caja);
+}
+
+/** La sesión de hoy (nuevas + vencidas), las más frágiles primero. */
+export function sesionDeHoy(a: Arbol, mazo: Mazo, progreso: MapaProgreso, hoy: string): TarjetaSesion[] {
+  return sesionRepaso(a, mazo, progreso, hoy, { todo: false });
 }
 
 export function pendientesHoy(a: Arbol, mazo: Mazo, progreso: MapaProgreso, hoy: string): number {

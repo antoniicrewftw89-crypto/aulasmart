@@ -3,10 +3,12 @@
 //   · "voltear": tarjeta con giro 3D real (concepto → explicación).
 //   · "opcion": opción múltiple, la correcta se ilumina verde y el fallo rojo.
 // Barra de progreso arriba; el progreso Leitner se guarda por la API tras cada
-// respuesta (acierto = supiste / elegiste la correcta).
+// respuesta. Al terminar (o si hoy no toca nada) se ve un panel de estadísticas
+// y el botón "Repasar todo" para repasar el árbol entero antes de un examen.
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { TarjetaSesion } from "@/lib/repaso/tarjetas";
+import type { ResumenRepaso } from "@/lib/repaso/estadisticas";
 
 type Estado = "cargando" | "repasando" | "hecho" | "vacio" | "error";
 
@@ -22,22 +24,52 @@ export function SesionRepaso({ materia, tema }: { materia: string; tema: string 
   const [estado, setEstado] = useState<Estado>("cargando");
   const [titulo, setTitulo] = useState("");
   const [cola, setCola] = useState<TarjetaSesion[]>([]);
+  const [resumen, setResumen] = useState<ResumenRepaso | null>(null);
+  const [modoTodo, setModoTodo] = useState(false);
   const [i, setI] = useState(0);
   const [volteada, setVolteada] = useState(false);     // tarjetas "voltear"
   const [elegida, setElegida] = useState<number | null>(null); // tarjetas "opcion"
   const [aciertos, setAciertos] = useState(0);
 
-  useEffect(() => {
-    fetch(`/api/arboles/${materia}/${tema}/repaso`)
+  // Vuelca la respuesta de la API en el estado. Se llama desde callbacks async
+  // (efecto inicial o botón), nunca en el cuerpo síncrono de un efecto.
+  const aplicar = useCallback((todo: boolean, data: {
+    titulo: string; tarjetas: TarjetaSesion[]; resumen?: ResumenRepaso;
+  }) => {
+    setTitulo(data.titulo);
+    setCola(data.tarjetas);
+    setResumen(data.resumen ?? null);
+    setModoTodo(todo);
+    setI(0);
+    setAciertos(0);
+    setVolteada(false);
+    setElegida(null);
+    setEstado(data.tarjetas.length ? "repasando" : "vacio");
+  }, []);
+
+  // Botón "repasar todo": estamos en un evento, el setState síncrono es legítimo.
+  const cargar = useCallback((todo: boolean) => {
+    setEstado("cargando");
+    fetch(`/api/arboles/${materia}/${tema}/repaso${todo ? "?todo=1" : ""}`)
       .then(async res => {
         if (!res.ok) { setEstado("error"); return; }
-        const data = await res.json();
-        setTitulo(data.titulo);
-        setCola(data.tarjetas);
-        setEstado(data.tarjetas.length ? "repasando" : "vacio");
+        aplicar(todo, await res.json());
       })
       .catch(() => setEstado("error"));
-  }, [materia, tema]);
+  }, [materia, tema, aplicar]);
+
+  // Carga inicial: sin setState síncrono en el cuerpo del efecto (React 19).
+  useEffect(() => {
+    let activo = true;
+    fetch(`/api/arboles/${materia}/${tema}/repaso`)
+      .then(async res => {
+        if (!activo) return;
+        if (!res.ok) { setEstado("error"); return; }
+        aplicar(false, await res.json());
+      })
+      .catch(() => { if (activo) setEstado("error"); });
+    return () => { activo = false; };
+  }, [materia, tema, aplicar]);
 
   const item = cola[i];
 
@@ -86,7 +118,9 @@ export function SesionRepaso({ materia, tema }: { materia: string; tema: string 
     return (
       <Marco>
         <p className="manuscrita text-4xl text-[var(--tinta)]">¡todo repasado por hoy! ✨</p>
-        <p className="mt-2 text-sm text-[var(--tinta-suave)]">Vuelve mañana, o sigue construyendo el árbol.</p>
+        <p className="mt-2 text-sm text-[var(--tinta-suave)]">Vuelve mañana, o repasa el tema entero para un examen.</p>
+        <PanelStats resumen={resumen} />
+        <RepasarTodo resumen={resumen} onRepasarTodo={() => cargar(true)} />
         <Acciones materia={materia} tema={tema} />
       </Marco>
     );
@@ -94,9 +128,11 @@ export function SesionRepaso({ materia, tema }: { materia: string; tema: string 
   if (estado === "hecho") {
     return (
       <Marco>
-        <p className="manuscrita text-4xl text-[var(--tinta)]">sesión completa 🎉</p>
+        <p className="manuscrita text-4xl text-[var(--tinta)]">{modoTodo ? "repaso completo 🎯" : "sesión completa 🎉"}</p>
         <p className="mt-2 text-lg text-[var(--tinta)]">{aciertos} de {cola.length} a la primera</p>
         <p className="mt-1 text-sm text-[var(--tinta-suave)]">Las que fallaste vuelven mañana; las acertadas, más adelante.</p>
+        <PanelStats resumen={resumen} />
+        {!modoTodo && <RepasarTodo resumen={resumen} onRepasarTodo={() => cargar(true)} />}
         <Acciones materia={materia} tema={tema} />
       </Marco>
     );
@@ -113,7 +149,7 @@ export function SesionRepaso({ materia, tema }: { materia: string; tema: string 
 
       <header className="flex items-center justify-between px-5 py-3">
         <Link href={`/arbol/${materia}/${tema}`} className="text-sm text-[var(--tinta-suave)] hover:text-[var(--tinta)]">← Volver al lienzo</Link>
-        <span className="manuscrita text-xl text-[var(--tinta)]">{titulo}</span>
+        <span className="manuscrita text-xl text-[var(--tinta)]">{titulo}{modoTodo && " · repaso completo"}</span>
         <span className="text-sm text-[var(--tinta-suave)]">{i + 1} / {cola.length}</span>
       </header>
 
@@ -125,6 +161,51 @@ export function SesionRepaso({ materia, tema }: { materia: string; tema: string 
           : <CartaOpcion t={item.tarjeta} elegida={elegida} onElegir={elegirOpcion} onResponder={avanzar} />}
       </div>
     </main>
+  );
+}
+
+// --- Panel de estadísticas de estudio -------------------------------------- #
+const ETIQUETA_CAJA = ["nuevas", "frágil", "media", "firme", "dominada"];
+
+function PanelStats({ resumen }: { resumen: ResumenRepaso | null }) {
+  if (!resumen || resumen.total === 0) return null;
+  const max = Math.max(1, ...resumen.porCaja);
+  const pctDominado = Math.round((resumen.dominado / resumen.total) * 100);
+
+  return (
+    <div className="mx-auto mt-6 w-full max-w-sm rounded-2xl border border-[var(--linea)] bg-[#fffdf8] p-5 text-left">
+      <div className="mb-3 flex items-baseline justify-between">
+        <span className="manuscrita text-2xl text-[var(--tinta)]">tu progreso</span>
+        <span className="text-sm text-[var(--tinta-suave)]">{pctDominado}% dominado</span>
+      </div>
+      <div className="flex items-end justify-between gap-2" style={{ height: 64 }}>
+        {resumen.porCaja.map((n, idx) => (
+          <div key={idx} className="flex flex-1 flex-col items-center justify-end gap-1">
+            <span className="text-[11px] font-semibold text-[var(--tinta-suave)]">{n}</span>
+            <div
+              className="w-full rounded-t-md bg-[var(--acento)] transition-all"
+              style={{ height: `${(n / max) * 44 + 4}px`, opacity: 0.35 + (idx / 5) * 0.65 }}
+            />
+            <span className="text-[9px] uppercase tracking-wide text-[var(--tinta-suave)]">{ETIQUETA_CAJA[idx]}</span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-xs text-[var(--tinta-suave)]">
+        {resumen.total} tarjetas · {resumen.vistas} repasadas · {resumen.pendientesHoy} tocan hoy
+      </p>
+    </div>
+  );
+}
+
+function RepasarTodo({ resumen, onRepasarTodo }: { resumen: ResumenRepaso | null; onRepasarTodo: () => void }) {
+  if (!resumen || resumen.total === 0) return null;
+  return (
+    <button
+      onClick={onRepasarTodo}
+      className="mt-5 rounded-xl border-2 border-[var(--acento)] px-6 py-3 font-semibold text-[var(--acento)] transition hover:bg-[var(--papel-sombra)] active:scale-95"
+    >
+      🔁 Repasar todo el tema ({resumen.total})
+    </button>
   );
 }
 
