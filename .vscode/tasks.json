@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Instalar dependencias",
+      "type": "shell",
+      "command": "pnpm install",
+      "presentation": { "reveal": "silent", "panel": "shared", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "▶ Arrancar AulaSmart (web :3002)",
+      "detail": "Instala y arranca. Luego abre http://localhost:3002",
+      "type": "shell",
+      "command": "pnpm dev",
+      "dependsOn": ["Instalar dependencias"],
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    }
+  ]
+}
