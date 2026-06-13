@@ -214,6 +214,29 @@ function Lienzo({ materia, tema }: { materia: string; tema: string }) {
         onPintar={color => { if (nodoSel) ed.editarNodo(nodoSel.id, { color }); }}
         onReordenar={ed.reordenar}
         onRepasar={() => router.push(`/arbol/${materia}/${tema}/repaso`)}
+        onGenerarMazo={async () => {
+          const generar = (motor: "auto" | "determinista") =>
+            fetch(`/api/arboles/${materia}/${tema}/tarjetas`, {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ motor }),
+            });
+          try {
+            let res = await generar("auto");
+            let data = await res.json();
+            if (res.status === 503 && data.sinClave) {
+              // sin clave de IA: caemos a preguntas básicas (sin gastar nada)
+              res = await generar("determinista");
+              data = await res.json();
+              return res.ok
+                ? "🪄 Preguntas básicas listas (pon una clave de IA en .env.local para preguntas mejores)"
+                : `⚠ ${data.error ?? "no se pudo generar"}`;
+            }
+            if (!res.ok) return `⚠ ${data.error ?? "no se pudo generar"}`;
+            return data.motor === "ia"
+              ? `🪄 Preguntas generadas con IA (${data.proveedor}) — dale al 🎴`
+              : "🪄 Preguntas básicas listas — dale al 🎴";
+          } catch { return "⚠ sin conexión con el servidor"; }
+        }}
         onGenerarGuion={async () => {
           try {
             const res = await fetch(`/api/arboles/${materia}/${tema}/generar/guion`, { method: "POST" });

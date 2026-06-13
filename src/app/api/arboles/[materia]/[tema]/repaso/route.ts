@@ -3,9 +3,10 @@
 //   POST { nodoId, acierto } → registra el resultado (mueve la caja Leitner).
 // Sin IA: el repaso es del estudiante sobre su propio árbol.
 import { NextResponse } from "next/server";
-import { leerArbol, leerProgreso, guardarProgreso } from "@/lib/storage/arboles";
+import { leerArbol, leerMazo, leerProgreso, guardarProgreso } from "@/lib/storage/arboles";
 import { registrarResultado, estadoInicial, type ProgresoNodo } from "@/lib/repaso/leitner";
-import { sesionDeHoy, pendientesHoy, type MapaProgreso } from "@/lib/repaso/tarjetas";
+import { sesionDeHoy, pendientesHoy, mazoOEffectivo, type MapaProgreso } from "@/lib/repaso/tarjetas";
+import type { Mazo } from "@/lib/repaso/tipos-tarjeta";
 
 type Params = { params: Promise<{ materia: string; tema: string }> };
 
@@ -16,11 +17,12 @@ export async function GET(_req: Request, { params }: Params) {
   const arbol = leerArbol(materia, tema);
   if (!arbol) return NextResponse.json({ error: "árbol no existe" }, { status: 404 });
   const progreso = leerProgreso(materia, tema) as MapaProgreso;
+  const mazo = mazoOEffectivo(arbol, leerMazo(materia, tema) as Mazo | null);
   const hoy = hoyIso();
   return NextResponse.json({
     titulo: arbol.titulo,
-    tarjetas: sesionDeHoy(arbol, progreso, hoy),
-    pendientes: pendientesHoy(arbol, progreso, hoy),
+    tarjetas: sesionDeHoy(arbol, mazo, progreso, hoy),
+    pendientes: pendientesHoy(arbol, mazo, progreso, hoy),
   });
 }
 
@@ -42,5 +44,6 @@ export async function POST(req: Request, { params }: Params) {
   progreso[nodoId] = registrarResultado(previo, acierto, hoy);
   guardarProgreso(materia, tema, progreso);
 
-  return NextResponse.json({ ok: true, progreso: progreso[nodoId], pendientes: pendientesHoy(arbol, progreso, hoy) });
+  const mazo = mazoOEffectivo(arbol, leerMazo(materia, tema) as Mazo | null);
+  return NextResponse.json({ ok: true, progreso: progreso[nodoId], pendientes: pendientesHoy(arbol, mazo, progreso, hoy) });
 }

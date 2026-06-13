@@ -111,6 +111,32 @@ export function guardarProgreso(materia: string, tema: string, progreso: Record<
   git(["commit", "-m", `repaso: ${materia}/${tema}`, "--quiet"]);
 }
 
+// --- Mazo de tarjetas (material derivado del árbol, no se espeja) --------- #
+function rutaMazo(materia: string, tema: string): string {
+  return path.join(dirArboles(), materia, `${tema}.tarjetas.json`);
+}
+
+export function leerMazo(materia: string, tema: string): unknown[] | null {
+  const ruta = rutaMazo(materia, tema);
+  if (!fs.existsSync(ruta)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(ruta, "utf8")) as unknown[];
+  } catch {
+    return null; // mazo corrupto: se regenera
+  }
+}
+
+export function guardarMazo(materia: string, tema: string, mazo: unknown[]): void {
+  asegurarRepo();
+  const destino = rutaMazo(materia, tema);
+  fs.mkdirSync(path.dirname(destino), { recursive: true });
+  const tmp = `${destino}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, JSON.stringify(mazo, null, 2), "utf8");
+  fs.renameSync(tmp, destino);
+  git(["add", "-A"]);
+  git(["commit", "-m", `tarjetas: ${materia}/${tema}`, "--quiet"]);
+}
+
 /**
  * Cambia la materia de un árbol: mueve el JSON y sus artefactos hermanos
  * ({tema}.guion.md, etc.) a la carpeta nueva. Null si no existe o hay conflicto.

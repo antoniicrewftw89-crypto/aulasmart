@@ -31,10 +31,12 @@ export function CajaHerramientas(props: {
   onPintar: (color: string) => void;
   onReordenar: () => void;
   onGenerarGuion: () => Promise<string | null>;
+  onGenerarMazo: () => Promise<string>;
   onRepasar: () => void;
   onAviso: (msg: string) => void;
 }) {
   const [generando, setGenerando] = useState(false);
+  const [generandoMazo, setGenerandoMazo] = useState(false);
   const [ayuda, setAyuda] = useState(false);
 
   async function generar() {
@@ -42,6 +44,14 @@ export function CajaHerramientas(props: {
     const error = await props.onGenerarGuion();
     setGenerando(false);
     props.onAviso(error ? `⚠ ${error}` : "📜 Guion guardado en data/ y en tu bóveda");
+  }
+
+  async function generarMazo() {
+    setGenerandoMazo(true);
+    props.onAviso("🪄 Generando preguntas…");
+    const aviso = await props.onGenerarMazo();
+    setGenerandoMazo(false);
+    props.onAviso(aviso);
   }
 
   return (
@@ -62,6 +72,9 @@ export function CajaHerramientas(props: {
           </span>
         )}
       </div>
+      <Herramienta titulo={generandoMazo ? "Generando preguntas…" : "Generar preguntas (opción múltiple) desde tu árbol — IA si hay clave, básico si no"} onClick={generarMazo} deshabilitada={generandoMazo}>
+        {generandoMazo ? "⏳" : "🪄"}
+      </Herramienta>
       <Herramienta titulo="Reordenar todo con el auto-layout" onClick={props.onReordenar}>
         ⇄
       </Herramienta>

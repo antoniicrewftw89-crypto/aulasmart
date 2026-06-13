@@ -1,21 +1,17 @@
-// tarjetas.ts — Convierte el árbol en un mazo de flashcards y arma la sesión
-// de repaso del día. PURO. El árbol que TÚ construiste ya es el material:
-// cada nodo con texto es una tarjeta, sin que la IA invente nada.
+// tarjetas.ts — Arma la sesión de repaso del día a partir del MAZO y el
+// progreso Leitner. PURO. El mazo lo produce generar-tarjetas (determinista o
+// IA); aquí solo se elige qué tarjeta mostrar por nodo y qué toca hoy.
 import type { Arbol, NodoArbol } from "../arbol/types";
-import { hijosDe, raizDe } from "../arbol/modelo";
 import { estadoInicial, tocaHoy, type ProgresoNodo } from "./leitner";
+import { generarMazoDeterminista } from "./generar-tarjetas";
+import type { Mazo, Tarjeta } from "./tipos-tarjeta";
 
 export type MapaProgreso = Record<string, ProgresoNodo>;
 
-export interface Tarjeta {
-  nodoId: string;
-  anverso: string;   // la idea (texto del nodo)
-  reverso: string;   // lo que sabes: notas + sub-conceptos
-  ruta: string;      // contexto: Raíz › … › nodo
-}
-
-export interface TarjetaConProgreso extends Tarjeta {
+export interface TarjetaSesion {
+  tarjeta: Tarjeta;
   progreso: ProgresoNodo;
+  ruta: string;   // contexto: Raíz › … › nodo
 }
 
 function rutaTexto(a: Arbol, nodo: NodoArbol): string {
@@ -29,34 +25,38 @@ function rutaTexto(a: Arbol, nodo: NodoArbol): string {
   return partes.join(" › ");
 }
 
-function reversoDe(a: Arbol, nodo: NodoArbol): string {
-  const partes: string[] = [];
-  if (nodo.notas.trim()) partes.push(nodo.notas.trim());
-  const hijos = hijosDe(a, nodo.id).map(h => h.texto).filter(Boolean);
-  if (hijos.length) partes.push(`Sub-conceptos: ${hijos.join(", ")}`);
-  if (nodo.fuentes.length) partes.push(`Fuentes: ${nodo.fuentes.join("; ")}`);
-  return partes.join("\n\n") || "(sin notas — repasa la idea en tu cabeza)";
+// Una tarjeta representativa por nodo: prefiere la de opción múltiple (más
+// exigente) y, si no, la de voltear. Así un nodo = una entrada en la sesión,
+// y el progreso Leitner sigue siendo por nodo.
+function tarjetaPorNodo(mazo: Mazo): Map<string, Tarjeta> {
+  const elegida = new Map<string, Tarjeta>();
+  for (const t of mazo) {
+    const actual = elegida.get(t.nodoId);
+    if (!actual || (actual.tipo === "voltear" && t.tipo === "opcion")) elegida.set(t.nodoId, t);
+  }
+  return elegida;
 }
 
-export function construirMazo(a: Arbol): Tarjeta[] {
-  return a.nodos
-    .filter(n => n.texto.trim())
-    .map(n => ({ nodoId: n.id, anverso: n.texto, reverso: reversoDe(a, n), ruta: rutaTexto(a, n) }));
+/** La sesión de hoy (nuevas + vencidas), las más frágiles primero. */
+export function sesionDeHoy(a: Arbol, mazo: Mazo, progreso: MapaProgreso, hoy: string): TarjetaSesion[] {
+  const porNodo = tarjetaPorNodo(mazo);
+  const idsConTexto = new Set(a.nodos.filter(n => n.texto.trim()).map(n => n.id));
+  const porId = new Map(a.nodos.map(n => [n.id, n]));
+  const sesion: TarjetaSesion[] = [];
+  for (const [nodoId, tarjeta] of porNodo) {
+    if (!idsConTexto.has(nodoId)) continue; // nodo borrado/sin texto: la tarjeta queda obsoleta
+    const progresoNodo = progreso[nodoId] ?? estadoInicial(hoy);
+    if (!tocaHoy(progresoNodo, hoy)) continue;
+    sesion.push({ tarjeta, progreso: progresoNodo, ruta: rutaTexto(a, porId.get(nodoId)!) });
+  }
+  return sesion.sort((x, y) => x.progreso.caja - y.progreso.caja);
 }
 
-/** Las tarjetas que toca repasar hoy (nuevas + vencidas), las más frágiles primero. */
-export function sesionDeHoy(a: Arbol, progreso: MapaProgreso, hoy: string): TarjetaConProgreso[] {
-  return construirMazo(a)
-    .map(t => ({ ...t, progreso: progreso[t.nodoId] ?? estadoInicial(hoy) }))
-    .filter(t => tocaHoy(t.progreso, hoy))
-    .sort((x, y) => x.progreso.caja - y.progreso.caja);
+export function pendientesHoy(a: Arbol, mazo: Mazo, progreso: MapaProgreso, hoy: string): number {
+  return sesionDeHoy(a, mazo, progreso, hoy).length;
 }
 
-/** Cuántas tarjetas tocan hoy (para el badge del botón, sin armar la sesión). */
-export function pendientesHoy(a: Arbol, progreso: MapaProgreso, hoy: string): number {
-  return sesionDeHoy(a, progreso, hoy).length;
+/** El mazo a usar: el guardado si existe, o uno determinista al vuelo (nunca vacío). */
+export function mazoOEffectivo(a: Arbol, guardado: Mazo | null): Mazo {
+  return guardado && guardado.length ? guardado : generarMazoDeterminista(a);
 }
-
-// La raíz también es tarjeta: el concepto central merece repaso. Se incluye
-// vía construirMazo sin trato especial (esto es solo documentación de intención).
-export const incluyeRaiz = (a: Arbol) => Boolean(raizDe(a).texto.trim());

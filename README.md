@@ -91,10 +91,15 @@ Sin claves, los botones explican qué falta y el resto de la app no se entera.
   árbol y escribe `{tema}.guion.md` (secciones por rama, checklist de los ⚠️
   dudosos y fuentes) junto al árbol y en la bóveda
 - **F3 — Flashcards con repaso Leitner** ✅ — botón **🎴** (con badge de cuántas
-  tocan hoy): cada nodo es una tarjeta (anverso = la idea, reverso = tus notas
-  y sub-conceptos). Aciertas → la tarjeta sube de caja y vuelve más tarde;
-  fallas → vuelve mañana. El progreso se guarda en `{tema}.repaso.json` (no se
-  espeja: es estado de estudio, no conocimiento). Atajos: Espacio voltea, ←/→ responden
+  tocan hoy): cada nodo es una tarjeta. Aciertas → sube de caja y vuelve más
+  tarde; fallas → vuelve mañana. Progreso en `{tema}.repaso.json` (no se espeja).
+- **F3.1 — Mazos multiformato (nivel Miro/Nate)** ✅ — botón **🪄** genera el
+  mazo del árbol: **opción múltiple** además de voltear. Con clave de IA
+  (Groq/Gemini gratis) las preguntas las redacta la IA en **una sola llamada**
+  para todo el árbol; sin clave, se generan deterministas usando los conceptos
+  hermanos como distractores. La sesión de repaso tiene **volteo 3D**, opción
+  múltiple con feedback verde/rojo y barra de progreso. Mazo en `{tema}.tarjetas.json`.
+  Atajos: Espacio voltea, 1-4 eligen opción, ←/→ responden.
 - **F3** — Quiz/flashcards (repaso Leitner) desde el árbol
 - **F4** — Slides desde el árbol
 - **F5** — Ingesta: PDF → borrador de árbol que apruebas nodo a nodo

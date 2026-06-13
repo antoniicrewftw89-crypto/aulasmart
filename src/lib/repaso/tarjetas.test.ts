@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { agregarHijo, crearArbol, editarNodo, raizDe } from "../arbol/modelo";
-import { construirMazo, sesionDeHoy, type MapaProgreso } from "./tarjetas";
+import { generarMazoDeterminista } from "./generar-tarjetas";
+import { mazoOEffectivo, pendientesHoy, sesionDeHoy, type MapaProgreso } from "./tarjetas";
 
-const HOY = "2026-06-12";
+const HOY = "2026-06-13";
 
 function arbolDemo() {
   const a0 = crearArbol("calculo", "limites", "Límites");
@@ -12,40 +13,50 @@ function arbolDemo() {
   return { arbol: a3, defId: def.id };
 }
 
-describe("construirMazo", () => {
-  it("una tarjeta por nodo con texto; anverso = idea, reverso = notas + sub-conceptos", () => {
-    const { arbol, defId } = arbolDemo();
-    const mazo = construirMazo(arbol);
-    expect(mazo).toHaveLength(3); // raíz + Definición + épsilon-delta
-    const carta = mazo.find(c => c.nodoId === defId)!;
-    expect(carta.anverso).toBe("Definición");
-    expect(carta.reverso).toContain("para todo ε>0");
-    expect(carta.reverso).toContain("épsilon-delta"); // el hijo aparece como sub-concepto
-    expect(carta.ruta).toBe("Límites › Definición");
-  });
-
-  it("ignora nodos sin texto", () => {
-    const a0 = crearArbol("x", "y", "Raíz");
-    const { arbol } = agregarHijo(a0, raizDe(a0).id, "   "); // vacío
-    expect(construirMazo(arbol)).toHaveLength(1);
-  });
-});
-
 describe("sesionDeHoy", () => {
-  it("incluye nodos nunca vistos (entran como nuevos) y los vencidos; excluye los futuros", () => {
+  it("incluye nodos nuevos y vencidos; excluye los futuros", () => {
     const { arbol, defId } = arbolDemo();
+    const mazo = generarMazoDeterminista(arbol);
     const progreso: MapaProgreso = {
       [defId]: { caja: 3, proximoRepaso: "2026-07-01", aciertos: 2, fallos: 0 }, // futuro → fuera
     };
-    const sesion = sesionDeHoy(arbol, progreso, HOY);
-    const ids = sesion.map(c => c.nodoId);
-    expect(ids).not.toContain(defId);          // su repaso es en julio
-    expect(sesion.length).toBe(2);             // raíz y épsilon-delta, nuevos
+    const sesion = sesionDeHoy(arbol, mazo, progreso, HOY);
+    expect(sesion.map(s => s.tarjeta.nodoId)).not.toContain(defId);
+  });
+
+  it("una entrada por nodo (no duplica voltear + opción del mismo nodo)", () => {
+    const { arbol } = arbolDemo();
+    const mazo = generarMazoDeterminista(arbol);
+    const sesion = sesionDeHoy(arbol, mazo, {}, HOY);
+    const nodos = sesion.map(s => s.tarjeta.nodoId);
+    expect(new Set(nodos).size).toBe(nodos.length); // sin repetidos
   });
 
   it("ordena por caja ascendente (lo más frágil primero)", () => {
     const { arbol } = arbolDemo();
-    const sesion = sesionDeHoy(arbol, {}, HOY); // todos nuevos = caja 1
-    expect(sesion.every(c => c.progreso.caja === 1)).toBe(true);
+    const sesion = sesionDeHoy(arbol, generarMazoDeterminista(arbol), {}, HOY);
+    expect(sesion.every(s => s.progreso.caja === 1)).toBe(true);
+  });
+
+  it("incluye la ruta de cada tarjeta", () => {
+    const { arbol } = arbolDemo();
+    const sesion = sesionDeHoy(arbol, generarMazoDeterminista(arbol), {}, HOY);
+    expect(sesion.some(s => s.ruta.includes("Límites"))).toBe(true);
+  });
+});
+
+describe("mazoOEffectivo", () => {
+  it("usa el guardado si tiene tarjetas; si no, genera determinista", () => {
+    const { arbol } = arbolDemo();
+    expect(mazoOEffectivo(arbol, null).length).toBeGreaterThan(0);
+    expect(mazoOEffectivo(arbol, [])).toEqual(mazoOEffectivo(arbol, null)); // vacío → determinista
+  });
+});
+
+describe("pendientesHoy", () => {
+  it("cuenta las tarjetas de la sesión de hoy", () => {
+    const { arbol } = arbolDemo();
+    const mazo = generarMazoDeterminista(arbol);
+    expect(pendientesHoy(arbol, mazo, {}, HOY)).toBe(sesionDeHoy(arbol, mazo, {}, HOY).length);
   });
 });
