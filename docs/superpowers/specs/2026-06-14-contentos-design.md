@@ -9,7 +9,11 @@
 
 ## 1. Visión
 
-ContentOS es el sistema operativo personal para crear contenido de calidad. No es "una app que resume videos" — es un sistema de inteligencia de contenido que, con el tiempo, construye la fórmula personal de viralidad del usuario: aprende qué funciona en su nicho, con su audiencia, en su estilo.
+ContentOS es el sistema operativo personal para crear contenido de calidad.
+
+**El video es el kernel.** Igual que un sistema operativo tiene un núcleo que gestiona todos los recursos del sistema, en ContentOS el video analizado es el núcleo desde el que se construye todo lo demás: guiones, imágenes, videos nuevos, calendarios, estrategias, voces. El usuario no consume el contenido — lo descompila, lo entiende y lo reconstruye.
+
+No es "una app que resume videos" — es un sistema de inteligencia de contenido que, con el tiempo, construye la fórmula personal de viralidad del usuario: aprende qué funciona en su nicho, con su audiencia, en su estilo.
 
 **Propuesta de valor única:**
 - Análisis de profundidad real con Claude Sonnet extended thinking (las alternativas usan GPT-3.5)
@@ -129,49 +133,59 @@ De las ideas de repurposing de todos los análisis, genera un calendario publica
 
 ## 7. Hub de generación (módulo C)
 
-Desde cualquier análisis guardado, el usuario puede lanzar generación directa:
+Desde cualquier análisis guardado, el usuario puede lanzar generación directa.
 
-### Video
-| Herramienta | Tipo | API |
-|---|---|---|
-| Higgsfield AI | Generación video IA | higgsfield.ai API |
-| Runway ML | Generación video IA | runwayml.com API |
-| Kling AI | Generación video IA | kling API |
-| Pika Labs | Generación video IA | pika.art API |
-| HeyGen | Avatar video | heygen.com API |
-| D-ID | Talking head | d-id.com API |
+### Estrategia de hubs (hallazgo clave de investigación)
 
-### Imagen
-| Herramienta | Tipo | API |
-|---|---|---|
-| Flux | Imágenes IA | fal.ai API |
-| Midjourney | Imágenes IA | via proxy no oficial (opcional) |
-| DALL·E 3 | Imágenes IA | OpenAI API |
+En lugar de integrar 8+ APIs de video por separado, **Higgsfield y Luma AI son hubs agregadores**:
+- **Higgsfield** → da acceso a Veo 3.1 + Kling 3.0 + Seedance 2.0 + Soul 2.0 (propio)
+- **Luma AI** → da acceso a Ray-2 + Kling 3.0 + Seedance + Veo 3.1 + ElevenLabs audio
+- **fal.ai** → da acceso a Flux + Pika + Stable Diffusion + docenas de modelos de imagen
 
-### Audio & Voz
-| Herramienta | Tipo | API |
-|---|---|---|
-| ElevenLabs | Clone de voz + TTS | elevenlabs.io API |
-| Suno | Música IA | suno.com API |
-| Udio | Música IA | udio.com API |
+Con solo 3 integraciones principales se cubre el 90% del ecosistema de generación.
 
-**Diseño de integración:** cada herramienta es un módulo independiente. La app funciona aunque no esté configurada ninguna. El usuario activa las que tiene API key.
+### Orden de integración y prioridades
+
+| # | Herramienta | Tipo | Prioridad | Pricing | Motivo |
+|---|---|---|---|---|---|
+| 1 | **fal.ai** | Hub imágenes + Pika | ALTA — Fase 3 | $0.025–0.05/img | Un endpoint, cubre Flux + Pika + SD + docenas más |
+| 2 | **Higgsfield AI** | Hub video principal | ALTA — Fase 3 | Pay-per-use (créditos) | SDK oficial JS, accede a Veo 3.1 + Kling 3.0 + Seedance |
+| 3 | **ElevenLabs** | Clone de voz + TTS | ALTA — Fase 3 | Desde $11/mes | SDK maduro, clone de voz es diferenciador clave |
+| 4 | **Ideogram** | Imágenes con texto | ALTA — Fase 3 | $0.03/img | El mejor para thumbnails con texto (logos, banners) |
+| 5 | **HeyGen** | Avatar / talking head | ALTA — Fase 4 | $1–4/min (pay-as-you-go) | Sin compromiso mensual, ideal para videos con presentador |
+| 6 | **Luma AI** | Segundo hub video | MEDIA — Fase 4 | Ray-2: ~$0.08/seg | Complementa Higgsfield, accede a modelos distintos |
+| 7 | **D-ID** | Talking head alternativo | MEDIA — Fase 4 | ~$5.90/min | Más barato que HeyGen para casos simples |
+| 8 | **DALL·E 3** | Imágenes IA | MEDIA — Fase 4 | ~$0.04–0.12/img | Fácil si ya hay API key de OpenAI (reutiliza SDK) |
+| 9 | **Udio** | Música IA | MEDIA — Fase 5 | Free + $10/mes | API directa disponible (mejor que Suno) |
+| 10 | **Murf AI** | TTS alternativo | BAJA — Fase 5 | Desde $19/mes | Solo si ElevenLabs no cubre el caso |
+
+### Descartadas (con justificación)
+
+| Herramienta | Motivo de descarte |
+|---|---|
+| Runway ML | Enterprise-only desde enero 2026. Volver a evaluar si abren acceso |
+| Midjourney | Sin API oficial. Proxies no oficiales violan ToS — riesgo de ban |
+| Suno | Sin API oficial. Proxies no oficiales, riesgo ToS. Sustituido por Udio |
+| Haiper | Pivotó a B2B enterprise en 2025, sin acceso self-serve |
+| Kling AI (directo) | Enterprise-only en API oficial. Accesible vía Higgsfield/Luma — no integrar directo |
+
+**Diseño de integración:** cada herramienta es un módulo independiente en `/lib/generators/`. La app funciona aunque no esté configurada ninguna. El usuario activa las que tiene API key en `.env`.
 
 ---
 
 ## 8. Integraciones de distribución (módulo D)
 
-| Integración | Función |
-|---|---|
-| Buffer / Later | Scheduling directo de posts generados |
-| Notion | Export de análisis como página |
-| Obsidian | Export a bóveda personal (markdown) |
-| Google Sheets | Export de datos para análisis |
-| Make.com / Zapier | Webhooks para automatizar flujos |
-| Perplexity | Fact-check de claims del video |
-| PDF export | Reportes de análisis |
-| Telegram Bot | Notificación cuando termina análisis |
-| Discord | Notificación cuando termina análisis |
+| Integración | Función | Prioridad | Nota |
+|---|---|---|---|
+| **Notion** | Export análisis como página | ALTA — Fase 4 | API oficial madura |
+| **Obsidian** | Export a bóveda (markdown) | ALTA — Fase 4 | Export local, sin API |
+| **PDF export** | Reportes de análisis | ALTA — Fase 4 | Sin dependencias externas |
+| **Telegram Bot** | Notificación al terminar análisis | ALTA — Fase 3 | API simple, muy útil para jobs largos |
+| **Make.com / Zapier** | Webhooks para automatizar flujos | MEDIA — Fase 4 | Webhook saliente desde ContentOS |
+| **Google Sheets** | Export de datos | MEDIA — Fase 4 | Para análisis de patrones |
+| **Later** | Scheduling posts | MEDIA — Fase 5 | API REST disponible |
+| **Buffer** | Scheduling posts | BAJA — Fase 5 | En transición a GraphQL, API nueva sin OAuth de terceros aún |
+| **Discord** | Notificación al terminar | BAJA — Fase 5 | Webhook simple |
 
 ---
 
