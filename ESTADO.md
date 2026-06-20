@@ -24,6 +24,8 @@
 - Cuando se retome la app: siguiente hito del roadmap = **F3 (quiz/Leitner)**.
 
 ## Decisiones recientes
+- Adopta el **Workspace Design System** (`C:\Workspace\design-system`): contrato de
+  tokens con valores de **papel/stickies** (identidad "mesa de estudio" intacta). Build OK.
 - ContentOS se separó a su propio repo; aquí solo quedan sus specs/planes en `docs/superpowers/`.
 
 ## Notas / bloqueos

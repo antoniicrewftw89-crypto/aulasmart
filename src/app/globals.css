@@ -21,14 +21,69 @@
   --sticky-lila: #d9c8f2;
   --sticky-naranja: #ffc89e;
 
+  /* Contrato del design system, con valores de papel (alma propia intacta) */
   --background: var(--papel);
   --foreground: var(--tinta);
+  --card: #fffdf8;
+  --card-foreground: var(--tinta);
+  --popover: #fffdf8;
+  --popover-foreground: var(--tinta);
+  --primary: var(--acento);
+  --primary-foreground: #f7fdfb;
+  --secondary: var(--papel-sombra);
+  --secondary-foreground: var(--tinta);
+  --muted: var(--papel-sombra);
+  --muted-foreground: var(--tinta-suave);
+  --accent: #e7f1ec;
+  --accent-foreground: var(--acento);
+  --destructive: #c0564d;
+  --success: #2f7d6d;
+  --warning: #b4791f;
+  --border: var(--linea);
+  --input: var(--linea);
+  --ring: var(--acento);
+  --chart-1: var(--sticky-amarillo);
+  --chart-2: var(--sticky-rosa);
+  --chart-3: var(--sticky-menta);
+  --chart-4: var(--sticky-cielo);
+  --chart-5: var(--sticky-lila);
+  --radius: 0.75rem;
 }
 
+/* Contrato del Workspace Design System (C:\Workspace\design-system), tema
+   aulasmart-papel. Los NOMBRES son los compartidos; los VALORES, papel/stickies. */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
   --font-sans: var(--font-baloo);
+  --font-heading: var(--font-baloo);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
 }
 
 body {
