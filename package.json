@@ -8,7 +8,9 @@
     "start": "next start -p 3002",
     "lint": "eslint",
     "test": "vitest run",
-    "pendientes": "tsx scripts/pendientes.ts"
+    "pendientes": "tsx scripts/pendientes.ts",
+    "format": "prettier --write .",
+    "prepare": "husky"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.84",
@@ -30,6 +32,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
+    "prettier": "^3.8.4",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5",
