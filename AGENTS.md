@@ -37,6 +37,8 @@ en su navegador y reporta (no usar navegador automatizado).
 
 ## Documentos fuente
 
+- **Estado actual:** [`ESTADO.md`](ESTADO.md) (raíz) — en qué voy y el próximo paso.
+  Léelo al **arrancar**; actualízalo al **cerrar** trabajo (convención del ecosistema).
 - Spec: `docs/superpowers/specs/2026-06-12-aulasmart-refundacion-design.md`
 - Planes por fase: `docs/superpowers/plans/`
 - Roadmap y estado: README (F0 ✅ · F1 ✅ · F2 ✅ · F3 quiz/Leitner · F4 slides · F5 ingesta PDF)
